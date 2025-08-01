@@ -1,0 +1,163 @@
+pub mod address
+CityPrefix
+CitySuffix
+CityName
+CountryName
+CountryCode
+StreetSuffix
+StreetName
+TimeZone
+StateName
+StateAbbr
+SecondaryAddressType
+SecondaryAddress
+ZipCode
+PostCode
+BuildingNumber
+Latitude
+Longitude
+Geohash(precision: u8);
+}
+}
+pub mod barcode
+Isbn
+Isbn10
+Isbn13
+}
+}
+pub mod boolean
+Boolean(ratio: u8);
+}
+}
+pub mod color
+HexColor
+RgbColor
+RgbaColor
+HslColor
+HslaColor
+Color
+}
+}
+pub mod chrono
+Time
+Date
+DateTime
+Duration
+DateTimeBefore(dt: chrono::DateTime<chrono::Utc>);
+DateTimeAfter(dt: chrono::DateTime<chrono::Utc>);
+DateTimeBetween(start: chrono::DateTime<chrono::Utc>, end: chrono::DateTime<chrono::Utc>);
+}
+}
+pub mod time
+Time
+Date
+DateTime
+Duration
+DateTimeBefore(dt: time::OffsetDateTime);
+DateTimeAfter(dt: time::OffsetDateTime);
+DateTimeBetween(start: time::OffsetDateTime, end: time::OffsetDateTime);
+}
+}
+pub mod creditcard
+CreditCardNumber
+}
+}
+pub mod company
+CompanySuffix
+CompanyName
+Buzzword
+BuzzwordMiddle
+BuzzwordTail
+CatchPhrase
+BsVerb
+BsAdj
+BsNoun
+Bs
+Profession
+Industry
+}
+}
+pub mod http
+RfcStatusCode
+ValidStatusCode
+}
+}
+pub mod internet
+FreeEmailProvider
+DomainSuffix
+FreeEmail
+SafeEmail
+Username
+Password(len_range: std::ops::Range<usize>);
+IPv4
+IPv6
+IP
+MACAddress
+UserAgent
+}
+}
+pub mod job
+Seniority
+Field
+Position
+Title
+}
+}
+pub mod lorem
+Word
+Words(count: std::ops::Range<usize>);
+Sentence(count: std::ops::Range<usize>);
+Sentences(count: std::ops::Range<usize>);
+Paragraph(count: std::ops::Range<usize>);
+Paragraphs(count: std::ops::Range<usize>);
+}
+}
+pub mod name
+FirstName
+LastName
+Title
+Suffix
+Name
+NameWithTitle
+}
+}
+pub mod number
+Digit
+NumberWithFormat<'a>(fmt: &'a str);
+}
+}
+pub mod phone_number
+PhoneNumber
+CellNumber
+}
+}
+pub mod filesystem
+FilePath
+FileName
+FileExtension
+DirPath
+MimeType
+Semver
+SemverStable
+SemverUnstable
+}
+}
+pub mod currency
+CurrencyCode
+CurrencyName
+CurrencySymbol
+}
+}
+pub mod finance
+Bic
+Isin
+}
+}
+pub mod administrative
+HealthInsuranceCode
+}
+}
+pub mod automotive
+LicencePlate
+}
+}
