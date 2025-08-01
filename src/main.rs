@@ -1,11 +1,11 @@
 use std::{
     env,
-    io::{self, BufRead, BufReader as _, Write as _},
+    io::{self, BufRead, Write as _},
     ops::Range,
     process::{Command, Stdio},
 };
 
-use dialoguer::{Select, theme::ColorfulTheme};
+use dialoguer::{FuzzySelect, theme::ColorfulTheme};
 
 mod auto;
 mod macros;
@@ -46,7 +46,7 @@ fn copy_to_clipboard(text: &str) {
 }
 
 fn get_data_type() -> String {
-    let selection = Select::with_theme(&ColorfulTheme::default())
+    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
         .with_prompt("Choose a data type")
         .items(&auto::FAKERS)
         .interact()

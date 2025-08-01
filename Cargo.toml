@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 chrono = { version = "0.4.41", default-features = false }
-dialoguer = "0.11.0"
+dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 fake = { version = "4.3.0", features = [
   "always-true-rng",
   "base64",
