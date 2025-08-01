@@ -24,7 +24,12 @@ pub fn get_range() -> Range<usize> {
         print!("\x1b[33m?\x1b[0m Enter upper bound: ");
         io::stdout().flush().unwrap();
         num2 = lines.next().unwrap().unwrap().trim().parse().unwrap();
-        print!("\x1B[1A\x1b[32m✔\x1b[0m\x1B[1B\r");
+        let icon = if num1 >= num2 {
+            "\x1b[31m✘"
+        } else {
+            "\x1b[32m✔"
+        };
+        print!("\x1B[1A{icon}\x1b[0m\x1B[1B\r");
         io::stdout().flush().unwrap();
     }
 
