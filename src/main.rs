@@ -1,6 +1,7 @@
 use std::{
     env,
-    io::Write as _,
+    io::{self, BufRead, BufReader as _, Write as _},
+    ops::Range,
     process::{Command, Stdio},
 };
 
@@ -9,20 +10,39 @@ use dialoguer::{Select, theme::ColorfulTheme};
 mod auto;
 mod macros;
 
+pub fn get_range() -> Range<usize> {
+    let stdin = io::stdin();
+    let mut lines = stdin.lock().lines();
+
+    print!("\x1b[33m?\x1b[0m Enter lower bound: ");
+    io::stdout().flush().unwrap();
+    let num1: usize = lines.next().unwrap().unwrap().trim().parse().unwrap();
+    print!("\x1B[1A\x1b[32m✔\x1B[1B\r");
+
+    let mut num2 = num1;
+    while num1 >= num2 {
+        print!("\x1b[33m?\x1b[0m Enter upper bound: ");
+        io::stdout().flush().unwrap();
+        num2 = lines.next().unwrap().unwrap().trim().parse().unwrap();
+        print!("\x1B[1A\x1b[32m✔\x1b[0m\x1B[1B\r");
+        io::stdout().flush().unwrap();
+    }
+
+    num1..num2
+}
+
 fn copy_to_clipboard(text: &str) {
-    let mut child = Command::new("xclip")
+    let mut process = Command::new("xclip")
         .args(["-selection", "clipboard"])
         .stdin(Stdio::piped())
         .spawn()
-        .expect("Failed to spawn xclip");
+        .unwrap();
 
-    if let Some(mut stdin) = child.stdin.take() {
-        stdin
-            .write_all(text.as_bytes())
-            .expect("Failed to write to xclip");
+    if let Some(mut stdin) = process.stdin.take() {
+        stdin.write_all(text.as_bytes()).unwrap();
     }
 
-    child.wait().expect("Failed to wait on xclip");
+    process.wait().unwrap();
 }
 
 fn get_data_type() -> String {

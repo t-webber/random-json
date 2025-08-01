@@ -31,8 +31,8 @@ macro_rules! call_fakers {
 
         pub fn call_fake(faker: &str) -> Option<String> {
             match (faker) {
-                $(stringify!($faker_str) => Some(fake::faker::$module_str::fr_fr::$faker_str(1..2).fake::<String>()),)*
-                $(stringify!($faker_vec) => Some(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec(1..2).fake::<Vec<String>>())),)*
+                $(stringify!($faker_str) => Some(fake::faker::$module_str::fr_fr::$faker_str($crate::get_range()).fake::<String>()),)*
+                $(stringify!($faker_vec) => Some(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec($crate::get_range()).fake::<Vec<String>>())),)*
                     _ => None,
 
             }
