@@ -1,12 +1,13 @@
 //! Generator for when a JSON schema file is provided.
 
 use core::fmt::Write as _;
+use core::iter::repeat_with;
 
 use rand::Rng as _;
 use rand::rngs::ThreadRng;
 use serde_json::{Map, Value};
 
-use crate::data::generate::generate_data;
+use crate::data::generate::{generate_data_non_nullable, generate_data_nullable};
 use crate::errors::{Error, Res};
 
 /// Arguments for generating JSON data based on a schema file.
@@ -46,28 +47,13 @@ impl<'rng> JsonArgs<'rng> {
         let generated_json = match json {
             Value::Null | Value::Bool(_) | Value::Number(_) =>
                 return Err(Error::InvalidSchemaType(format!("{json:?}"))),
-            Value::String(data_type) => {
-                let parsed_data_type = if let Some(parsed_data_type) = data_type.strip_suffix('?') {
-                    if rng.random_bool(0.3) {
-                        return Ok(None);
-                    }
-                    parsed_data_type
+            Value::String(data_type) =>
+                if let Some(data) = generate_data_nullable(data_type, rng)? {
+                    Value::String(data)
                 } else {
-                    data_type
-                };
-                Value::String(generate_data(parsed_data_type, rng)?)
-            }
-            Value::Array(values) => {
-                let new_values = values
-                    .iter()
-                    .filter_map(|son| match Self::generate_json(son, rng) {
-                        Ok(None) => None,
-                        Ok(Some(value)) => Some(Ok(value)),
-                        Err(err) => Some(Err(err)),
-                    })
-                    .collect::<Res<Vec<_>>>()?;
-                Value::Array(new_values)
-            }
+                    return Ok(None);
+                },
+            Value::Array(values) => Value::Array(Self::generate_vec(values, rng)?),
             Value::Object(map) => {
                 let mut new_map = Map::with_capacity(map.len());
                 for (key, json_value) in map {
@@ -82,6 +68,39 @@ impl<'rng> JsonArgs<'rng> {
         Ok(Some(generated_json))
     }
 
+    /// Generate a vec with random data
+    ///
+    /// The vec must have the following format: `[data_type, min_nb_elts,
+    /// max_nb_elts+1]`.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// ["FreeEmail"] // produce a random number of emails
+    /// ["FirstName", 1] // produce 1 first name
+    /// ["LicencePlate", 1, 10] // produce between 1 and 9 licence plates
+    fn generate_vec(values: &[Value], rng: &mut ThreadRng) -> Res<Vec<Value>> {
+        let mut iter = values.iter();
+
+        let data_type_value = iter.next().ok_or(Error::MissingArrayDataType)?;
+        let Value::String(data_type_str) = data_type_value else {
+            return Err(Error::InvalidArrayDataType(data_type_value.to_owned()));
+        };
+
+        let len = match (iter.next(), iter.next()) {
+            (None, _) => rng.random_range(1..10),
+            (Some(Value::Number(inf)), Some(Value::Number(sup))) =>
+                rng.random_range(number_to_int(inf)?..number_to_int(sup)?),
+            (Some(Value::Number(inf)), None) => number_to_int(inf)?,
+            (Some(Value::Number(_)), Some(value)) | (Some(value), _) =>
+                return Err(Error::ExpectedInteger(value.to_owned())),
+        };
+
+        repeat_with(|| generate_data_non_nullable(data_type_str, rng).map(Value::String))
+            .take(len)
+            .collect()
+    }
+
     /// Create a new instance of `JsonArgs` with the provided parameters.
     pub const fn new(
         before: String,
@@ -92,4 +111,15 @@ impl<'rng> JsonArgs<'rng> {
     ) -> Self {
         Self { after, before, count, json, rng }
     }
+}
+
+/// Tries to convert a [`serde_json::Number`] to a [`usize`]
+fn number_to_int(json_number: &serde_json::Number) -> Res<usize> {
+    let number = json_number
+        .as_u64()
+        .ok_or(Error::NumberNotAnInteger(json_number.to_owned()))?;
+
+    number
+        .try_into()
+        .map_err(|error| Error::U64ToUsize { original: number, error })
 }

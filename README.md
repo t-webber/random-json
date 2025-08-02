@@ -124,4 +124,4 @@ And many more... Use the `fake-json --list` to list all supported data types!
 > Yet to be implemented:
 >
 > - nullable arrays and objects
-> - random-size arrays
+> - support for fakers with ranges directly in schemas

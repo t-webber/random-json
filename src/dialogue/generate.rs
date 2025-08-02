@@ -4,7 +4,7 @@ use dialoguer::FuzzySelect;
 use dialoguer::theme::ColorfulTheme as ColourfulTheme;
 use rand::rngs::ThreadRng;
 
-use crate::data::generate::generate_data;
+use crate::data::generate::generate_data_non_nullable;
 use crate::errors::Res;
 
 /// Generate data from a dialogue selection.
@@ -15,5 +15,5 @@ pub fn generate_from_dialogue(rng: &mut ThreadRng, fakers: &[&str]) -> Res<Strin
         .items(fakers)
         .interact()?;
 
-    generate_data(fakers[selection], rng)
+    generate_data_non_nullable(fakers[selection], rng)
 }

@@ -6,7 +6,7 @@ use clap::Parser;
 use rand::rngs::ThreadRng;
 
 use crate::data::auto::get_fakers;
-use crate::data::generate::generate_data;
+use crate::data::generate::generate_data_nullable;
 use crate::dialogue::generate::generate_from_dialogue;
 use crate::errors::{Error, Res};
 use crate::json::generate::JsonArgs;
@@ -71,7 +71,7 @@ impl CliArgs {
         }
 
         if let Some(data_type) = self.data_type {
-            return generate_data(&data_type, rng);
+            return generate_data_nullable(&data_type, rng).map(Option::unwrap_or_default);
         }
 
         if self.interactive {
