@@ -5,7 +5,7 @@ use rand::rngs::ThreadRng;
 
 use crate::data::auto::get_fakers;
 use crate::dialogue::generate::generate_from_dialogue;
-use crate::errors::Res;
+use crate::errors::{Error, Res};
 use crate::json::generate::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
@@ -19,18 +19,22 @@ pub struct CliArgs {
     #[arg(short, long, default_value_t = 1)]
     count: u32,
     /// String to print before every data generation of the JSON schema.
-    #[arg(short, long, default_value_t = String::new())]
-    before: String,
+    #[arg(short, long)]
+    before: Option<String>,
     /// String to print after every data generation of the JSON schema.
-    #[arg(short, long, default_value_t = String::new())]
-    after: String,
+    #[arg(short, long)]
+    after: Option<String>,
     /// Path to the json schema.
     #[arg(short, long, default_value_t = String::from("schema.json"))]
     file: String,
-    /// List and select the random generator with a terminal dialogue.
+    /// Select the data type with a terminal dialogue with fuzzy search.
     /// This option overrides the others.
     #[arg(short, long, default_value_t = false)]
-    dialogue: bool,
+    interactive: bool,
+    /// List all available data types.
+    /// This option does not generate any data and overrides the others.
+    #[arg(short, long, default_value_t = false)]
+    list: bool,
 }
 
 impl CliArgs {
@@ -41,11 +45,23 @@ impl CliArgs {
 
     /// Run the generation based on the parsed CLI arguments.
     fn run(self, rng: &mut ThreadRng) -> Res<String> {
-        if self.dialogue {
+        if self.interactive && self.list {
+            Err(Error::ListAndInteractiveConflict)
+        } else if self.interactive {
             let fakers = get_fakers();
             generate_from_dialogue(rng, &fakers)
+        } else if self.list {
+            let fakers = get_fakers();
+            Ok(fakers.join("\n"))
         } else {
-            JsonArgs::new(self.before, self.after, self.count, self.file, rng).generate()
+            JsonArgs::new(
+                self.before.unwrap_or_default(),
+                self.after.unwrap_or_default(),
+                self.count,
+                self.file,
+                rng,
+            )
+            .generate()
         }
     }
 }

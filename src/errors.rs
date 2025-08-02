@@ -38,6 +38,9 @@ pub enum Error {
     InvalidSchemaType(String),
     /// Error occurred while writing JSON-format generated data to output.
     JsonWrite(fmt::Error),
+    /// User tried to use both `--list` and `--interactive` options, which is
+    /// not allowed.
+    ListAndInteractiveConflict,
     /// General I/O error from terminal interaction.
     TerminalIo(io::Error),
 }
