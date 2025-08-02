@@ -19,20 +19,19 @@ A CLI tool to generate random data from a JSON schema to fill databases.
 cargo install fake-json
 ```
 
-## Usage
+## Options
 
 ```txt
-Usage: fake-json [OPTIONS]
-
-Options:
-  -c, --count <COUNT>    Number of times to repeat the JSON [default: 1]
-  -b, --before <BEFORE>  String to print before every data generation of the JSON schema
-  -a, --after <AFTER>    String to print after every data generation of the JSON schema
-  -f, --file <FILE>      Path to the json schema [default: schema.json]
-  -i, --interactive      Select the data type with a terminal dialogue with fuzzy search. This option overrides the others
-  -l, --list             List all available data types. This option does not generate any data and overrides the others
-  -d, --debug            Debug errors with more precise information
-  -h, --help             Print help
+  -c, --count <COUNT>       Number of times to repeat the JSON [default: 1]
+  -b, --before <BEFORE>     String to print before every data generation of the JSON schema
+  -a, --after <AFTER>       String to print after every data generation of the JSON schema
+  -f, --file <SCHEMA_FILE>  Path to the json schema [default: schema.json]
+  -j, --json <JSON>         Pass the JSON from stdout instead of via a json file This option overrides --file if both are provided
+  -t, --type <DATA_TYPE>    Generates some data of the given data type. This option overrides the others
+  -i, --interactive         Select the data type with a terminal dialogue with fuzzy search. This option overrides the others
+  -l, --list                List all available data types. This option overrides the others
+  -d, --debug               Debug errors with more precise information
+  -h, --help                Print help
 ```
 
 ## Examples
@@ -126,4 +125,3 @@ And many more... Use the `fake-json --list` to list all supported data types!
 >
 > - nullable arrays and objects
 > - random-size arrays
-> - pass a single data-type directly

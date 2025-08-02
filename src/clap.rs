@@ -6,6 +6,7 @@ use clap::Parser;
 use rand::rngs::ThreadRng;
 
 use crate::data::auto::get_fakers;
+use crate::data::generate::generate_data;
 use crate::dialogue::generate::generate_from_dialogue;
 use crate::errors::{Error, Res};
 use crate::json::generate::JsonArgs;
@@ -27,12 +28,16 @@ pub struct CliArgs {
     #[arg(short, long)]
     after: Option<String>,
     /// Path to the json schema.
-    #[arg(short, long, default_value_t = String::from("schema.json"))]
-    file: String,
+    #[arg(short = 'f', long = "file", default_value_t = String::from("schema.json"))]
+    schema_file: String,
     /// Pass the JSON from stdout instead of via a json file
     /// This option overrides --file if both are provided.
     #[arg(short, long)]
     json: Option<String>,
+    /// Generates some data of the given data type.
+    /// This option overrides the others.
+    #[arg(short = 't', long = "type")]
+    data_type: Option<String>,
     /// Select the data type with a terminal dialogue with fuzzy search.
     /// This option overrides the others.
     #[arg(short, long, default_value_t = false)]
@@ -65,6 +70,10 @@ impl CliArgs {
             return Err(Error::ListAndInteractiveConflict);
         }
 
+        if let Some(data_type) = self.data_type {
+            return generate_data(&data_type, rng);
+        }
+
         if self.interactive {
             return generate_from_dialogue(rng, &get_fakers());
         }
@@ -76,7 +85,8 @@ impl CliArgs {
         let json = if let Some(json) = self.json {
             json
         } else {
-            fs::read_to_string(&self.file).map_err(Error::file_not_found(self.file))?
+            fs::read_to_string(&self.schema_file)
+                .map_err(Error::file_not_found(self.schema_file))?
         };
 
         JsonArgs::new(

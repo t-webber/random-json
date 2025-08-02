@@ -1,7 +1,6 @@
 //! Generator for when a JSON schema file is provided.
 
 use core::fmt::Write as _;
-use std::fs;
 
 use rand::Rng as _;
 use rand::rngs::ThreadRng;
