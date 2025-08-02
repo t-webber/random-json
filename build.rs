@@ -88,16 +88,23 @@ fn main() {
     fs::write(
         "src/data/auto.rs",
         format!(
-            r##"use crate::{{call_fakers, simple_fakers}};
-use fake::Fake;
-use std::cell::LazyCell;
+            r##"//! Contains the list of fakers available in the `fake` library.
+//!
+//! Auto-generated file, do not edit manually.
 
-pub const FAKERS: LazyCell<Vec<&'static str>> = LazyCell::new(|| {{
-    let mut fakers = Vec::with_capacity(SIMPLE_FAKERS.len() + CALL_FAKERS.len());
+#![expect(clippy::arbitrary_source_item_ordering, reason = "macro definitions")]
+
+use fake::Fake as _;
+
+use crate::{{call_fakers, simple_fakers}};
+
+/// List of data type that are associated with a faker.
+pub fn get_fakers() -> Vec<&'static str> {{
+    let mut fakers = Vec::with_capacity(SIMPLE_FAKERS.len().saturating_add(CALL_FAKERS.len()));
     fakers.extend_from_slice(SIMPLE_FAKERS);
     fakers.extend_from_slice(CALL_FAKERS);
     fakers
-}});
+}}
 
 simple_fakers!(
 {simple_fakers}

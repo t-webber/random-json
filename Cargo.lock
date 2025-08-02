@@ -505,7 +505,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fake-data"
+name = "fake-json"
 version = "0.1.0"
 dependencies = [
  "chrono",
