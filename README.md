@@ -51,6 +51,50 @@ fake-json --count 1000
 fake-json --help
 ```
 
+### Prisma example
+
+```bash
+echo '{
+  "firstName": "FirstName",
+  "lastName": "LastName",
+  "phone_number": "PhoneNumber",
+  "email": "FreeEmail"
+}' >schema.json
+
+
+fake-json --count 3 --before "await prisma.person.create({ data: " --after " });
+"
+```
+
+and the output will be
+
+```prisma
+await prisma.person.create({ data: {
+  "firstName": "Eliane",
+  "lastName": "Perret",
+  "phone_number": "08 32 72 03 11",
+  "email": "stanislas_quia@free.fr"
+} });
+
+await prisma.person.create({ data: {
+  "firstName": "Herbert",
+  "lastName": "Salles",
+  "phone_number": "02 33 18 29 16",
+  "email": "pascal_amet@laposte.fr"
+} });
+
+await prisma.person.create({ data: {
+  "firstName": "Johan",
+  "lastName": "Mangin",
+  "phone_number": "03 79 01 68 02",
+  "email": "thibaud_officiis@hotmail.fr"
+} });
+```
+
+> ![TIP]
+>
+> You can do this will any database/ORM, just customise the `--before` and `--after` options!
+
 ## Supported Data Types
 
 The tool supports a lots of data types through the [fake](https://github.com/cksac/fake-rs) crate:
