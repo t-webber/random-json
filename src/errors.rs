@@ -25,12 +25,7 @@ pub enum Error {
 
     /// File exists but is in an invalid format, that makes the deserialization
     /// fail.
-    InvalidFile {
-        /// The path to the file with invalid format
-        file: String,
-        /// The JSON parsing error that occurred
-        error: serde_json::Error,
-    },
+    InvalidJson(serde_json::Error),
     /// Invalid schema type specified.
     ///
     /// This means a unsupported JSON feature was present, such as booleans,
@@ -59,10 +54,10 @@ impl Error {
         }
     }
 
-    /// Helper function to create an [`Self::InvalidFile`] error with a specific
-    /// file name.
-    pub fn invalid_file(file: String) -> impl FnOnce(serde_json::Error) -> Self {
-        |error: serde_json::Error| Self::InvalidFile { file, error }
+    /// Helper function to create an [`Self::FileNotFound`] error with a
+    /// specific file name.
+    pub fn file_not_found(file: String) -> impl FnOnce(io::Error) -> Self {
+        |error: io::Error| Self::FileNotFound { file, error }
     }
 
     /// Get a nice and user-friendly error in case of failures.
@@ -70,9 +65,9 @@ impl Error {
         match self {
             Self::JsonWriteString(_) |
             Self::DeserializeJson(_) => "Internal error occured.".to_owned(),
-            Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible!"),
+        Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),
             Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type. You can use --list to display all the valid data types, or --interactive to fuzzy search in all the data types!"),
-            Self::InvalidFile { file, .. } => format!("{file} was found, but it isn't a valid JSON format."),
+            Self::InvalidJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
             Self::DialogueIo(_) |

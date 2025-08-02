@@ -18,8 +18,8 @@ pub struct JsonArgs<'rng> {
     before: String,
     /// Number of times to repeat the JSON generation.
     count: u32,
-    /// Path to the JSON schema file.
-    file: String,
+    /// JSON schema content
+    json: String,
     /// Random number generator to use for generating data.
     rng: &'rng mut ThreadRng,
 }
@@ -28,15 +28,7 @@ impl<'rng> JsonArgs<'rng> {
     /// Generate the JSON data based on the schema file and the provided
     /// parameters.
     pub fn generate(self) -> Res<String> {
-        let json_file_content = match fs::read_to_string(&self.file) {
-            Err(error) => {
-                return Err(Error::FileNotFound { file: self.file, error });
-            }
-            Ok(content) => content,
-        };
-
-        let json: Value =
-            serde_json::from_str(&json_file_content).map_err(Error::invalid_file(self.file))?;
+        let json: Value = serde_json::from_str(&self.json).map_err(Error::InvalidJson)?;
 
         let mut generated_data = String::new();
         for _ in 0..self.count {
@@ -96,9 +88,9 @@ impl<'rng> JsonArgs<'rng> {
         before: String,
         after: String,
         count: u32,
-        file: String,
+        json: String,
         rng: &'rng mut ThreadRng,
     ) -> Self {
-        Self { after, before, count, file, rng }
+        Self { after, before, count, json, rng }
     }
 }

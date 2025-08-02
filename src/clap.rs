@@ -1,5 +1,7 @@
 //! Module to handle CLI arguments parsing and execution.
 
+use std::fs;
+
 use clap::Parser;
 use rand::rngs::ThreadRng;
 
@@ -27,12 +29,16 @@ pub struct CliArgs {
     /// Path to the json schema.
     #[arg(short, long, default_value_t = String::from("schema.json"))]
     file: String,
+    /// Pass the JSON from stdout instead of via a json file
+    /// This option overrides --file if both are provided.
+    #[arg(short, long)]
+    json: Option<String>,
     /// Select the data type with a terminal dialogue with fuzzy search.
     /// This option overrides the others.
     #[arg(short, long, default_value_t = false)]
     interactive: bool,
     /// List all available data types.
-    /// This option does not generate any data and overrides the others.
+    /// This option overrides the others.
     #[arg(short, long, default_value_t = false)]
     list: bool,
     /// Debug errors with more precise information.
@@ -56,22 +62,30 @@ impl CliArgs {
     /// Run the generation based on the parsed CLI arguments.
     fn run(self, rng: &mut ThreadRng) -> Res<String> {
         if self.interactive && self.list {
-            Err(Error::ListAndInteractiveConflict)
-        } else if self.interactive {
-            let fakers = get_fakers();
-            generate_from_dialogue(rng, &fakers)
-        } else if self.list {
-            let fakers = get_fakers();
-            Ok(fakers.join("\n"))
-        } else {
-            JsonArgs::new(
-                self.before.unwrap_or_default(),
-                self.after.unwrap_or_default(),
-                self.count,
-                self.file,
-                rng,
-            )
-            .generate()
+            return Err(Error::ListAndInteractiveConflict);
         }
+
+        if self.interactive {
+            return generate_from_dialogue(rng, &get_fakers());
+        }
+
+        if self.list {
+            return Ok(get_fakers().join("\n"));
+        }
+
+        let json = if let Some(json) = self.json {
+            json
+        } else {
+            fs::read_to_string(&self.file).map_err(Error::file_not_found(self.file))?
+        };
+
+        JsonArgs::new(
+            self.before.unwrap_or_default(),
+            self.after.unwrap_or_default(),
+            self.count,
+            json,
+            rng,
+        )
+        .generate()
     }
 }

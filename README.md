@@ -9,9 +9,9 @@ A CLI tool to generate random data from a JSON schema to fill databases.
 ## Features
 
 - 🎯 **Schema-driven**: Generate data based on JSON schemas
-- 🎲 **Rich data types**: Support for various data types including dates, emails, UUIDs, and more
+- 🎲 **Rich data types**: Support for various data types including dates, emails, names, countries, address, and many more
 - 🗃️ **Database-friendly**: Perfect for filling databases with realistic test data
-- 🔧 **Interactive CLI**: User-friendly command-line interface with interactive prompts, for when you don't want data-type to choose.
+- 🔧 **Interactive CLI**: User-friendly command-line interface with interactive prompts, for when you don't know what data-type to choose.
 
 ## Installation
 
@@ -91,7 +91,7 @@ await prisma.person.create({ data: {
 } });
 ```
 
-> ![TIP]
+> [!TIP]
 >
 > You can do this will any database/ORM, just customise the `--before` and `--after` options!
 
@@ -99,20 +99,31 @@ await prisma.person.create({ data: {
 
 The tool supports a lots of data types through the [fake](https://github.com/cksac/fake-rs) crate:
 
-- _Basic types_: strings, numbers, booleans
+- _Addresses_: street, states, countries, coordinates, etc.
 - _Dates and times_: timestamps, dates, etc.
-- _Internet_: emails, URLs, IP addresses
-- _Identifiers_: UUIDs, ObjectIds, ULIDs
-- _Geographic_: coordinates, addresses
-- _Financial_: currencies, decimal numbers
+- _Internet_: URLs, IP addresses, etc.
+- _Identifiers_: UUIDs, ObjectIds, ULIDs, etc.
+- _Financial_: currencies, decimal numbers, etc.
+- _Information_: people names, emails, phone numbers, health insurance numbers, etc.
+- _Text_: words, sentences, passwords, etc.
 
-And many more... Use the `fake-json --list` to list all support data types!
+And many more... Use the `fake-json --list` to list all supported data types!
 
 ## Dependencies
 
 - `clap`: Command-line argument parsing
-- `fake`: Fake data generation with extensive feature support
+- `fake`: Fake data generation
 - `serde_json`: JSON serialization/deserialization
-- `dialoguer`: Interactive command-line prompts
+- `dialoguer`: Interactive command-line dialogue to select with fuzzy-finder
 - `chrono`: Date and time handling
-- `rand`: Random number generation
+- `rand`: Random number generation (e.g. to choose when a nullable field becomes undefined)
+
+## Upcomming features
+
+> [!NOTE]
+>
+> Yet to be implemented:
+>
+> - nullable arrays and objects
+> - random-size arrays
+> - pass a single data-type directly
