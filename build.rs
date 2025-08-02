@@ -84,7 +84,7 @@ fn main() {
     }
 
     fs::write(
-        "src/auto.rs",
+        "src/data/auto.rs",
         format!(
             r##"use crate::{{call_fakers, simple_fakers}};
 use fake::Fake;
