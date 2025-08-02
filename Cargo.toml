@@ -3,11 +3,16 @@ name = "fake-json"
 version = "0.1.0"
 edition = "2024"
 description = "A CLI tool to generate random data from a JSON schema to fill databases."
-license = "GPL-3.0-or-later"
+license = "MIT or Apache-2.0"
 repository = "https://github.com/t-webber/fake-json"
 authors = ["Tom Webber <t.c.w.webber@gmail.com>"]
 keywords = ["fake", "json", "cli", "data generation"]
-categories = ["Command line utilities", "Database interfaces", "Development tools", "Configuration"]
+categories = [
+  "Command line utilities",
+  "Database interfaces",
+  "Development tools",
+  "Configuration",
+]
 readme = "README.md"
 
 [dependencies]
