@@ -1,5 +1,7 @@
+use rand::rngs::ThreadRng;
+use rand::seq::IndexedRandom as _;
+
 use super::auto::apply_fake;
-use rand::{rngs::ThreadRng, seq::IndexedRandom as _};
 
 const POSITIONS: [&str; 5] = ["Trésorier", "VPO", "SecGe", "DirCo", "Info"];
 

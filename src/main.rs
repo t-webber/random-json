@@ -1,11 +1,11 @@
 use crate::clap::CliArgs;
 use crate::errors::Res;
-use rand::rng;
 mod clap;
 mod data;
 mod dialog;
 mod errors;
 mod json;
+use rand::rng;
 
 fn main() -> Res {
     let mut rng = rng();

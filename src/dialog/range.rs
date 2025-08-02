@@ -1,8 +1,6 @@
-use std::{
-    fmt,
-    io::{BufRead as _, Lines, StdinLock, Write as _, stdin, stdout},
-    ops::Range,
-};
+use std::fmt;
+use std::io::{BufRead as _, Lines, StdinLock, Write as _, stdin, stdout};
+use std::ops::Range;
 
 use crate::errors::Res;
 

@@ -1,4 +1,6 @@
-use std::{borrow::Cow, fmt::Write as _, fs};
+use std::borrow::Cow;
+use std::fmt::Write as _;
+use std::fs;
 
 fn main() {
     let url = "https://raw.githubusercontent.com/cksac/fake-rs/master/fake/src/faker/mod.rs";

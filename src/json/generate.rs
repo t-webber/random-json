@@ -1,10 +1,11 @@
-use crate::{
-    data::generate::generate_data,
-    errors::{Error, Res},
-};
-use rand::{Rng as _, rngs::ThreadRng};
-use serde_json::{Map, Value};
 use std::fs;
+
+use rand::Rng as _;
+use rand::rngs::ThreadRng;
+use serde_json::{Map, Value};
+
+use crate::data::generate::generate_data;
+use crate::errors::{Error, Res};
 
 fn generate_json(json: &Value, rng: &mut ThreadRng) -> Option<Value> {
     Some(match json {
@@ -58,22 +59,13 @@ impl<'rng> JsonArgs<'rng> {
         file: String,
         rng: &'rng mut ThreadRng,
     ) -> Self {
-        Self {
-            before,
-            after,
-            count,
-            file,
-            rng,
-        }
+        Self { before, after, count, file, rng }
     }
 
     pub fn generate(self) -> Res {
         let json_file_content = match fs::read_to_string(&self.file) {
             Err(error) => {
-                return Err(Error::FileNotFound {
-                    file: self.file,
-                    error,
-                });
+                return Err(Error::FileNotFound { file: self.file, error });
             }
             Ok(content) => content,
         };

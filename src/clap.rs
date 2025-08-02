@@ -1,7 +1,9 @@
 use clap::Parser;
 use rand::rngs::ThreadRng;
 
-use crate::{dialog::generate::generate_from_dialog, errors::Res, json::generate::JsonArgs};
+use crate::dialog::generate::generate_from_dialog;
+use crate::errors::Res;
+use crate::json::generate::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
 #[derive(Parser, Debug)]
