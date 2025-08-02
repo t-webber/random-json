@@ -1,8 +1,9 @@
-use crate::{dialog::generate::generate_from_dialog, json::generate::JsonArgs};
+use crate::{dialog::generate::generate_from_dialog, errors::Res, json::generate::JsonArgs};
 use clap::Parser;
 use rand::{rng, rngs::ThreadRng};
 mod data;
 mod dialog;
+mod errors;
 mod json;
 
 /// CLI to generate some fake data under JSON format.
@@ -27,16 +28,17 @@ struct Args {
 }
 
 impl Args {
-    fn run(self, rng: &mut ThreadRng) {
+    fn run(self, rng: &mut ThreadRng) -> Res {
         if self.dialog {
-            return println!("{}", generate_from_dialog(rng));
+            println!("{}", generate_from_dialog(rng)?);
+            Ok(())
+        } else {
+            JsonArgs::new(self.before, self.after, self.count, self.file, rng).generate()
         }
-
-        JsonArgs::new(self.before, self.after, self.count, self.file, rng).generate();
     }
 }
 
-fn main() {
+fn main() -> Res {
     let mut rng = rng();
-    Args::parse().run(&mut rng);
+    Args::parse().run(&mut rng)
 }

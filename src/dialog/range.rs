@@ -4,10 +4,12 @@ use std::{
     ops::Range,
 };
 
+use crate::errors::Res;
+
 macro_rules! print_flush {
     ($($arg:tt)*) => {{
         print!($($arg)*);
-        stdout().flush().unwrap();
+        stdout().flush()?;
     }};
 }
 
@@ -36,7 +38,7 @@ fn read_int(lines: &mut Lines<StdinLock<'static>>) -> Option<usize> {
     lines.next()?.ok()?.trim().parse().ok()
 }
 
-pub fn get_range() -> Range<usize> {
+pub fn get_range() -> Res<Range<usize>> {
     use TermCodes::*;
 
     let stdin = stdin();
@@ -68,5 +70,5 @@ pub fn get_range() -> Range<usize> {
         }
     };
 
-    num1..num2
+    Ok(num1..num2)
 }

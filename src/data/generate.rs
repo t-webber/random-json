@@ -5,7 +5,12 @@ const POSITIONS: [&str; 5] = ["Trésorier", "VPO", "SecGe", "DirCo", "Info"];
 
 fn manual(data_type: &str, rng: &mut ThreadRng) -> Option<String> {
     match data_type {
-        "Position" => Some(POSITIONS.choose(rng).unwrap().to_string()),
+        "Position" => Some(
+            POSITIONS
+                .choose(rng)
+                .expect("POSITIONS not empty")
+                .to_string(),
+        ),
         _ => None,
     }
 }

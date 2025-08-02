@@ -1,4 +1,7 @@
-use crate::data::generate::generate_data;
+use crate::{
+    data::generate::generate_data,
+    errors::{Error, Res},
+};
 use rand::{Rng as _, rngs::ThreadRng};
 use serde_json::{Map, Value};
 use std::fs;
@@ -64,14 +67,25 @@ impl<'rng> JsonArgs<'rng> {
         }
     }
 
-    pub fn generate(self) {
-        let json_file_content = fs::read_to_string(self.file).unwrap();
-        let json: Value = serde_json::from_str(&json_file_content).unwrap();
+    pub fn generate(self) -> Res {
+        let json_file_content = match fs::read_to_string(&self.file) {
+            Err(error) => {
+                return Err(Error::FileNotFound {
+                    file: self.file,
+                    error,
+                });
+            }
+            Ok(content) => content,
+        };
+        let json: Value =
+            serde_json::from_str(&json_file_content).map_err(Error::invalid_file(self.file))?;
 
         for _ in 0..self.count {
             let generate_json = generate_json(&json, self.rng).unwrap_or_default();
             let generate_json_str = serde_json::to_string_pretty(&generate_json).unwrap();
             println!("{}\n{generate_json_str}\n{}", self.before, self.after);
         }
+
+        Ok(())
     }
 }

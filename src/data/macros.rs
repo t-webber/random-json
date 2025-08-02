@@ -6,14 +6,14 @@ macro_rules! simple_fakers {
             $(stringify!($faker),)*
         ];
 
-        pub fn apply_fake(faker: &str) -> Option<String> {
+        pub fn apply_fake(faker: &str) -> $crate::errors::Res<String> {
 
             match (faker) {
-                $(stringify!($faker) => Some(
-                    fake::faker::$module::fr_fr::$faker(
-$($arg,)*
-                        ).fake::<$type>().to_string()
-                        ), )*
+                $(
+                    stringify!($faker) => Ok(
+                    fake::faker::$module::fr_fr::$faker($($arg,)*).fake::<$type>().to_string()
+                    ),
+                )*
                 _ => call_fake(faker),
             }
 
@@ -29,11 +29,11 @@ macro_rules! call_fakers {
             $(stringify!($faker_vec),)*
         ];
 
-        pub fn call_fake(faker: &str) -> Option<String> {
+        pub fn call_fake(faker: &str) -> $crate::errors::Res<String> {
             match (faker) {
-                $(stringify!($faker_str) => Some(fake::faker::$module_str::fr_fr::$faker_str($crate::dialog::range::get_range()).fake::<String>()),)*
-                $(stringify!($faker_vec) => Some(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec($crate::dialog::range::get_range()).fake::<Vec<String>>())),)*
-                    _ => None,
+                $(stringify!($faker_str) => Ok(fake::faker::$module_str::fr_fr::$faker_str($crate::dialog::range::get_range()?).fake::<String>()),)*
+                $(stringify!($faker_vec) => Ok(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec($crate::dialog::range::get_range()?).fake::<Vec<String>>())),)*
+                    _ => Err($crate::errors::Error::InvalidDataType(faker.to_owned())),
 
             }
         }
