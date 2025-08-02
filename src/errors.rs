@@ -37,7 +37,7 @@ pub enum Error {
     /// undefined, numbers, etc.
     InvalidSchemaType(String),
     /// Error occurred while writing JSON-format generated data to output.
-    JsonWrite(fmt::Error),
+    JsonWriteString(fmt::Error),
     /// User tried to use both `--list` and `--interactive` options, which is
     /// not allowed.
     ListAndInteractiveConflict,
@@ -46,10 +46,39 @@ pub enum Error {
 }
 
 impl Error {
+    /// Get a nice and user-friendly error in case of failures.
+    pub fn display(&self, debug: bool) -> String {
+        let repr = format!("\x1b[31mError:\x1b[0m \x1b[33m{}\x1b[0m\n", self.repr());
+
+        if debug {
+            format!(
+                "{repr}\nError type: {self:?}\n\x1b[3mIf you think this is a bug, please report it here: https://github.com/t-webber/fake-json/issues/new. Thanks!\x1b[0m",
+            )
+        } else {
+            format!("{repr}\nUse the --debug flag for more information",)
+        }
+    }
+
     /// Helper function to create an [`Self::InvalidFile`] error with a specific
     /// file name.
     pub fn invalid_file(file: String) -> impl FnOnce(serde_json::Error) -> Self {
         |error: serde_json::Error| Self::InvalidFile { file, error }
+    }
+
+    /// Get a nice and user-friendly error in case of failures.
+    fn repr(&self) -> String {
+        match self {
+            Self::JsonWriteString(_) |
+            Self::DeserializeJson(_) => "Internal error occured.".to_owned(),
+            Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible!"),
+            Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type. You can use --list to display all the valid data types, or --interactive to fuzzy search in all the data types!"),
+            Self::InvalidFile { file, .. } => format!("{file} was found, but it isn't a valid JSON format."),
+            Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
+            Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
+            Self::DialogueIo(_) |
+            Self::TerminalIo(_) =>
+                "An error occurred whilst interacting with your terminal. ".to_owned(),
+        }
     }
 }
 

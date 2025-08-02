@@ -44,7 +44,7 @@ impl<'rng> JsonArgs<'rng> {
             let generate_json_str =
                 serde_json::to_string_pretty(&generate_json).map_err(Error::DeserializeJson)?;
             writeln!(generated_data, "{}\n{generate_json_str}\n{}", self.before, self.after)
-                .map_err(Error::JsonWrite)?;
+                .map_err(Error::JsonWriteString)?;
         }
 
         Ok(generated_data)

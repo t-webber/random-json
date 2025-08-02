@@ -47,12 +47,8 @@ mod json;
 use rand::rng;
 
 use crate::clap::CliArgs;
-use crate::errors::Res;
 
-#[expect(clippy::print_stdout, reason = "purpose of the CLI")]
-fn main() -> Res {
+fn main() {
     let mut rng = rng();
-    let generated_data = CliArgs::parse_and_run(&mut rng)?;
-    println!("{generated_data}");
-    Ok(())
+    CliArgs::parse_and_run(&mut rng);
 }

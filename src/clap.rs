@@ -35,12 +35,22 @@ pub struct CliArgs {
     /// This option does not generate any data and overrides the others.
     #[arg(short, long, default_value_t = false)]
     list: bool,
+    /// Debug errors with more precise information.
+    #[arg(short, long, default_value_t = false)]
+    debug: bool,
 }
 
 impl CliArgs {
     /// Parse the CLI arguments and run the appropriate generations.
-    pub fn parse_and_run(rng: &mut ThreadRng) -> Res<String> {
-        Self::parse().run(rng)
+    pub fn parse_and_run(rng: &mut ThreadRng) {
+        let this = Self::parse();
+        let debug = this.debug;
+
+        #[expect(clippy::print_stderr, clippy::print_stdout, reason = "it's a cli")]
+        match this.run(rng) {
+            Ok(content) => println!("{content}"),
+            Err(err) => eprintln!("{}", err.display(debug)),
+        }
     }
 
     /// Run the generation based on the parsed CLI arguments.

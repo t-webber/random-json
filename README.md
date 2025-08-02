@@ -26,11 +26,12 @@ Usage: fake-json [OPTIONS]
 
 Options:
   -c, --count <COUNT>    Number of times to repeat the JSON [default: 1]
-  -b, --before <BEFORE>  String to print before every data generation of the JSON schema [default: ]
-  -a, --after <AFTER>    String to print after every data generation of the JSON schema [default: ]
+  -b, --before <BEFORE>  String to print before every data generation of the JSON schema
+  -a, --after <AFTER>    String to print after every data generation of the JSON schema
   -f, --file <FILE>      Path to the json schema [default: schema.json]
-  -i, --interactive      List and select the random generator with a terminal dialogue. This option overrides the others
+  -i, --interactive      Select the data type with a terminal dialogue with fuzzy search. This option overrides the others
   -l, --list             List all available data types. This option does not generate any data and overrides the others
+  -d, --debug            Debug errors with more precise information
   -h, --help             Print help
 ```
 
