@@ -37,8 +37,8 @@ macro_rules! call_fakers {
 
         pub fn call_fake(faker: &str) -> $crate::errors::Res<String> {
             match (faker) {
-                $(stringify!($faker_str) => Ok(fake::faker::$module_str::fr_fr::$faker_str($crate::dialogue::range::get_range()?).fake::<String>()),)*
-                $(stringify!($faker_vec) => Ok(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec($crate::dialogue::range::get_range()?).fake::<Vec<String>>())),)*
+                $(stringify!($faker_str) => Ok(fake::faker::$module_str::fr_fr::$faker_str($crate::dialog::range::get_range()?).fake::<String>()),)*
+                $(stringify!($faker_vec) => Ok(format!("{:?}", fake::faker::$module_vec::fr_fr::$faker_vec($crate::dialog::range::get_range()?).fake::<Vec<String>>())),)*
                     _ => Err($crate::errors::Error::InvalidDataType(faker.to_owned())),
 
             }

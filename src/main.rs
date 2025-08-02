@@ -41,7 +41,7 @@
 
 mod clap;
 mod data;
-mod dialogue;
+mod dialog;
 mod errors;
 mod json;
 use rand::rng;

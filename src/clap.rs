@@ -6,10 +6,10 @@ use clap::Parser;
 use rand::rngs::ThreadRng;
 
 use crate::data::auto::get_fakers;
-use crate::data::generate::generate_data_nullable;
-use crate::dialogue::generate::generate_from_dialogue;
+use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
-use crate::json::generate::JsonArgs;
+use crate::json::JsonArgs;
+use crate::json::generator::NullableGenerator as _;
 
 /// CLI to generate some fake data under JSON format.
 #[expect(
@@ -71,11 +71,13 @@ impl CliArgs {
         }
 
         if let Some(data_type) = self.data_type {
-            return generate_data_nullable(&data_type, rng).map(Option::unwrap_or_default);
+            return data_type
+                .generate_nullable(rng)
+                .map(Option::unwrap_or_default);
         }
 
         if self.interactive {
-            return generate_from_dialogue(rng, &get_fakers());
+            return Dialog::from(&get_fakers()).generate(rng);
         }
 
         if self.list {
