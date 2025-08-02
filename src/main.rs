@@ -1,8 +1,12 @@
 use std::{
-    env,
+    env::{self},
+    fs,
     io::{self, BufRead, Write as _},
+    mem,
     ops::Range,
 };
+
+use rand::{Rng as _, rngs::ThreadRng, seq::IndexedRandom};
 
 mod auto;
 mod macros;
@@ -44,16 +48,66 @@ fn get_data_type() -> String {
     auto::FAKERS[selection].to_string()
 }
 
-fn try_get_faker(data_type: Option<String>) {
-    if let Some(data_type) = data_type
-        && let Some(data) = auto::fake(&data_type)
-    {
-        println!("{data}");
-    } else {
-        try_get_faker(Some(get_data_type()));
+const POSITIONS: [&str; 5] = ["Trésorier", "VPO", "SecGe", "DirCo", "Info"];
+
+fn manual(data_type: &str, rng: &mut ThreadRng) -> Option<String> {
+    match data_type {
+        "Position" => Some(POSITIONS.choose(rng).unwrap().to_string()),
+        _ => None,
     }
 }
 
+fn generate_random(json: &mut serde_json::Value, rng: &mut ThreadRng) -> bool {
+    match json {
+        serde_json::Value::Null | serde_json::Value::Bool(_) | serde_json::Value::Number(_) => {
+            panic!()
+        }
+        serde_json::Value::String(data_type) => {
+            if data_type.ends_with("?") {
+                if rng.random_bool(0.3) {
+                    return false;
+                } else {
+                    data_type.pop();
+                }
+            }
+            *data_type = manual(data_type, rng).unwrap_or_else(|| auto::fake(data_type).unwrap());
+        }
+        serde_json::Value::Array(values) => values.retain_mut(|son| generate_random(son, rng)),
+        serde_json::Value::Object(map) => {
+            let map_data = mem::take(map);
+            for (k, mut v) in map_data {
+                if generate_random(&mut v, rng) {
+                    map.insert(k, v);
+                }
+            }
+        }
+    }
+    true
+}
+
+fn print_one(mut json: serde_json::Value, rng: &mut ThreadRng) {
+    generate_random(&mut json, rng);
+    println!("{}, ", serde_json::to_string_pretty(&json).unwrap());
+}
+
 fn main() {
-    try_get_faker(env::args().nth(1));
+    let mut args = env::args().skip(1);
+    let mut rng = rand::rng();
+    if let Some(count) = args.next() {
+        let count = count.parse().unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string("schema.json").unwrap()).unwrap();
+
+        if count > 1 {
+            println!("[");
+        }
+        for _ in 0..count {
+            print_one(json.clone(), &mut rng);
+        }
+        if count > 1 {
+            println!("]");
+        }
+    } else {
+        get_data_type();
+    }
 }
