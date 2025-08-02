@@ -114,8 +114,6 @@ call_fakers!(
 {call_fakers_single},
 {call_fakers_multiple}
 );
-
-
 "##
         ),
     )
