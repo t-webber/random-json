@@ -55,14 +55,20 @@ pub struct CliArgs {
 
 impl CliArgs {
     /// Parse the CLI arguments and run the appropriate generations.
-    pub fn parse_and_run() {
+    pub fn parse_and_run() -> Res<(), ()> {
         let this = Self::parse();
         let debug = this.debug;
 
         #[expect(clippy::print_stderr, clippy::print_stdout, reason = "it's a cli")]
         match this.run() {
-            Ok(content) => println!("{content}"),
-            Err(err) => eprintln!("{}", err.display(debug)),
+            Ok(content) => {
+                println!("{content}");
+                Ok(())
+            }
+            Err(err) => {
+                eprintln!("{}", err.display(debug));
+                Err(())
+            }
         }
     }
 

@@ -47,6 +47,11 @@ mod generator;
 mod json;
 
 fn main() {
+    use std::process::exit;
+
     use crate::clap::CliArgs;
-    CliArgs::parse_and_run();
+
+    if CliArgs::parse_and_run().is_err() {
+        exit(1)
+    }
 }

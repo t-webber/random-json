@@ -96,7 +96,7 @@ impl Error {
             Self::JsonWriteString(_) |
                             Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
             Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),
-            Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type. You can use --list to display all the valid data types, or --interactive to fuzzy search in all the data types!"),
+            Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type.\nUse -l to list the valid data types, -i to fuzzy search the data types, or -u to define your own data types!"),
             Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
