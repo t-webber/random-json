@@ -43,12 +43,10 @@ mod clap;
 mod data;
 mod dialog;
 mod errors;
+mod generator;
 mod json;
-use rand::rng;
-
-use crate::clap::CliArgs;
 
 fn main() {
-    let mut rng = rng();
-    CliArgs::parse_and_run(&mut rng);
+    use crate::clap::CliArgs;
+    CliArgs::parse_and_run();
 }

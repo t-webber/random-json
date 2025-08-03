@@ -3,13 +3,12 @@
 use std::fs;
 
 use clap::Parser;
-use rand::rngs::ThreadRng;
 
 use crate::data::auto::get_fakers;
 use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
+use crate::generator::{Fakers, NullableGenerator as _};
 use crate::json::JsonArgs;
-use crate::json::generator::NullableGenerator as _;
 
 /// CLI to generate some fake data under JSON format.
 #[expect(
@@ -30,20 +29,23 @@ pub struct CliArgs {
     /// Path to the json schema.
     #[arg(short = 'f', long = "file", default_value_t = String::from("schema.json"))]
     schema_file: String,
-    /// Pass the JSON from stdout instead of via a json file
-    /// This option overrides --file if both are provided.
+    /// Pass the JSON from stdout instead of via a json file.
+    /// Overrides the --file option.
     #[arg(short, long)]
     json: Option<String>,
     /// Generates some data of the given data type.
-    /// This option overrides the others.
+    /// Overrides the other options.
     #[arg(short = 't', long = "type")]
     data_type: Option<String>,
-    /// Select the data type with a terminal dialogue with fuzzy search.
-    /// This option overrides the others.
+    /// Add custom data types
+    #[arg(short, long = "user")]
+    user_defined: Vec<String>,
+    /// Select the data type with a dialog and fuzzy search.
+    /// Overrides the other options.
     #[arg(short, long, default_value_t = false)]
     interactive: bool,
     /// List all available data types.
-    /// This option overrides the others.
+    /// Overrides the other options.
     #[arg(short, long, default_value_t = false)]
     list: bool,
     /// Debug errors with more precise information.
@@ -53,31 +55,33 @@ pub struct CliArgs {
 
 impl CliArgs {
     /// Parse the CLI arguments and run the appropriate generations.
-    pub fn parse_and_run(rng: &mut ThreadRng) {
+    pub fn parse_and_run() {
         let this = Self::parse();
         let debug = this.debug;
 
         #[expect(clippy::print_stderr, clippy::print_stdout, reason = "it's a cli")]
-        match this.run(rng) {
+        match this.run() {
             Ok(content) => println!("{content}"),
             Err(err) => eprintln!("{}", err.display(debug)),
         }
     }
 
     /// Run the generation based on the parsed CLI arguments.
-    fn run(self, rng: &mut ThreadRng) -> Res<String> {
+    fn run(self) -> Res<String> {
         if self.interactive && self.list {
             return Err(Error::ListAndInteractiveConflict);
         }
 
+        let mut fakers = Fakers::new(get_fakers(), self.user_defined)?;
+
         if let Some(data_type) = self.data_type {
             return data_type
-                .generate_nullable(rng)
+                .generate_nullable(&mut fakers)
                 .map(Option::unwrap_or_default);
         }
 
         if self.interactive {
-            return Dialog::from(&get_fakers()).generate(rng);
+            return Dialog::generate(fakers);
         }
 
         if self.list {
@@ -96,7 +100,7 @@ impl CliArgs {
             self.after.unwrap_or_default(),
             self.count,
             json,
-            rng,
+            fakers,
         )
         .generate()
     }

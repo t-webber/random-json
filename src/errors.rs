@@ -21,12 +21,25 @@ Examples:
 #[derive(Debug)]
 #[expect(dead_code, reason = "used as return of main")]
 pub enum Error {
-    /// Error from `serde_json` when deserializing JSON data to a pretty string.
-    DeserializeJson(serde_json::Error),
+    /// Failed to convert JSON number to usize
+    ArrayInvalidLength {
+        /// Conversion error
+        error: TryFromIntError,
+        /// Original number parsed from the JSON
+        original: u64,
+    },
+    /// First argument of array was missing
+    ArrayMissingDataType,
     /// Error from the dialoguer crate during user interaction.
     DialogueIo(dialoguer::Error),
     /// Failed to parse a JSON node into an integer
     ExpectedInteger(serde_json::Value),
+    /// Provided a user defined data type with no values.
+    FakerDefEmpty,
+    /// Missing colon in user defined data type.
+    FakerDefMissingColon,
+    /// Too many colons in user defined data type.
+    FakerDefTooManyColons,
     /// File could not be found or accessed.
     FileNotFound {
         /// The path to the file that could not be found
@@ -34,13 +47,8 @@ pub enum Error {
         /// The underlying I/O error that caused the failure
         error: io::Error,
     },
-    /// First argument of array was invalid
-    InvalidArrayDataType(serde_json::Value),
     /// The data type provided to the generator isn't recognised.
     InvalidDataType(String),
-    /// File exists but is in an invalid format, that makes the deserialization
-    /// fail.
-    InvalidJson(serde_json::Error),
     /// Invalid schema type specified.
     ///
     /// This means a unsupported JSON feature was present, such as booleans,
@@ -51,19 +59,15 @@ pub enum Error {
     /// User tried to use both `--list` and `--interactive` options, which is
     /// not allowed.
     ListAndInteractiveConflict,
-    /// First argument of array was missing
-    MissingArrayDataType,
     /// Faled to parse a JSON number into an unsigned integer
     NumberNotAnInteger(serde_json::Number),
+    /// File exists but is in an invalid format, that makes the deserialization
+    /// fail.
+    SerdeDeserializeJson(serde_json::Error),
+    /// Error from `serde_json` when deserializing JSON data to a pretty string.
+    SerdeSerializeJson(serde_json::Error),
     /// General I/O error from terminal interaction.
     TerminalIo(io::Error),
-    /// Failed to convert JSON number to usize
-    U64ToUsize {
-        /// Original number parsed from the JSON
-        original: u64,
-        /// Conversion error
-        error: TryFromIntError,
-    },
 }
 
 impl Error {
@@ -90,20 +94,22 @@ impl Error {
     fn repr(&self) -> String {
         match self {
             Self::JsonWriteString(_) |
-                    Self::DeserializeJson(_) => "Internal error occured.".to_owned(),
+                            Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
             Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),
             Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type. You can use --list to display all the valid data types, or --interactive to fuzzy search in all the data types!"),
-            Self::InvalidJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
+            Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
             Self::DialogueIo(_) |
-                    Self::TerminalIo(_) =>
-                        "An error occurred whilst interacting with your terminal. ".to_owned(),
-            Self::InvalidArrayDataType(value) => format!("invalid array syntax: invalid data type {value}.{ARRAY_SYNTAX}"),
-            Self::MissingArrayDataType => format!("invalid array syntax: missing data type.{ARRAY_SYNTAX}"),
+                            Self::TerminalIo(_) =>
+                                "An error occurred whilst interacting with your terminal. ".to_owned(),
+            Self::ArrayMissingDataType => format!("invalid array syntax: missing data type.{ARRAY_SYNTAX}"),
             Self::ExpectedInteger(value) => format!("invalid aray syntax: expected integer, found {value}.{ARRAY_SYNTAX}"),
             Self::NumberNotAnInteger(number) => format!("invalid array syntax: expected integer, found {number}.{ARRAY_SYNTAX}"),
-            Self::U64ToUsize{original, ..} => format!("{original} is too large to be the length of an array.{ARRAY_SYNTAX}")
+            Self::ArrayInvalidLength{original, ..} => format!("{original} is too large to be the length of an array.{ARRAY_SYNTAX}"),
+            Self::FakerDefMissingColon => ("Data types must be given with the format -u 'DataTypeName:Value1|Value2|Value3'").to_owned(),
+            Self::FakerDefTooManyColons => "To pass multiple user-defined data types, pass multiple times the `-u` options: -u 'Type1:Value1|Value2' -u 'Type2:Value3|Value4'".to_owned(),
+            Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned()
         }
     }
 }

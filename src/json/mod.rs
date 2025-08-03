@@ -1,40 +1,41 @@
 //! Generator for when a JSON schema file is provided.
 
-pub mod generator;
+mod generator;
 
 use core::fmt::Write as _;
 
-use rand::rngs::ThreadRng;
 use serde_json::Value;
 
 use crate::errors::{Error, Res};
-use crate::json::generator::NullableGenerator as _;
+use crate::generator::{Fakers, NullableGenerator as _};
 
 /// Arguments for generating JSON data based on a schema file.
-pub struct JsonArgs<'rng> {
+pub struct JsonArgs {
     /// String to print after every data generation of the JSON schema.
     after: String,
     /// String to print before every data generation of the JSON schema.
     before: String,
     /// Number of times to repeat the JSON generation.
     count: u32,
+    /// Data generator
+    fakers: Fakers,
     /// JSON schema content
     json: String,
-    /// Random number generator to use for generating data.
-    rng: &'rng mut ThreadRng,
 }
 
-impl<'rng> JsonArgs<'rng> {
+impl JsonArgs {
     /// Generate the JSON data based on the schema file and the provided
     /// parameters.
-    pub fn generate(self) -> Res<String> {
-        let json: Value = serde_json::from_str(&self.json).map_err(Error::InvalidJson)?;
+    pub fn generate(mut self) -> Res<String> {
+        let json: Value = serde_json::from_str(&self.json).map_err(Error::SerdeDeserializeJson)?;
 
         let mut generated_data = String::new();
         for _ in 0..self.count {
-            let generate_json = json.generate_nullable(self.rng)?.unwrap_or_default();
+            let generate_json = json
+                .generate_nullable(&mut self.fakers)?
+                .unwrap_or_default();
             let generate_json_str =
-                serde_json::to_string_pretty(&generate_json).map_err(Error::DeserializeJson)?;
+                serde_json::to_string_pretty(&generate_json).map_err(Error::SerdeSerializeJson)?;
             writeln!(generated_data, "{}{generate_json_str}{}", self.before, self.after)
                 .map_err(Error::JsonWriteString)?;
         }
@@ -48,8 +49,8 @@ impl<'rng> JsonArgs<'rng> {
         after: String,
         count: u32,
         json: String,
-        rng: &'rng mut ThreadRng,
+        fakers: Fakers,
     ) -> Self {
-        Self { after, before, count, json, rng }
+        Self { after, before, count, fakers, json }
     }
 }
