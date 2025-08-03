@@ -16,40 +16,15 @@ categories = [
 readme = "README.md"
 
 [dependencies]
-chrono = { version = "0.4.41", default-features = false }
+chrono = { version = "0.4.41", features = [] }
 clap = { version = "4.5.42", features = ["derive"] }
 dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 fake = { version = "4.3.0", features = [
-  "always-true-rng",
-  "base64",
-  "bigdecimal",
-  "bigdecimal-rs",
-  "bson",
-  "bson_oid",
   "chrono",
-  "chrono-tz",
-  "cli",
-  "derive",
-  "dummy",
-  "email_address",
   "geo",
-  "geo-types",
-  "glam",
   "http",
-  "indexmap",
-  "maybe-non-empty-collections",
-  "num-traits",
-  "rand_core",
   "random_color",
-  "rust_decimal",
-  "semver",
-  "serde_json",
   "time",
-  "ulid",
-  "url",
-  "url-escape",
-  "uuid",
-  "zerocopy",
 ] }
 rand = "0.9.2"
 serde_json = "1.0.142"
