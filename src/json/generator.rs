@@ -8,8 +8,8 @@ use serde_json::{Map, Value};
 use crate::errors::{Error, Res};
 use crate::generator::{Data, Generator, NullableGenerator};
 
-impl Generator for Map<String, Value> {
-    fn generate(&self, data: &mut Data) -> Res<Self> {
+impl Generator<Value> for Map<String, Value> {
+    fn generate(&self, data: &mut Data) -> Res<Value> {
         let mut new_map = Self::with_capacity(self.len());
         for (key, json_value) in self {
             let parsed_key = if let Some(parsed_key) = key.strip_suffix('?') {
@@ -24,11 +24,11 @@ impl Generator for Map<String, Value> {
                 new_map.insert(parsed_key.to_owned(), generated_value);
             }
         }
-        Ok(new_map)
+        Ok(Value::Object(new_map))
     }
 }
 
-impl Generator for Vec<Value> {
+impl Generator<Value> for Vec<Value> {
     /// Generate a vec with random data
     ///
     /// The vec must have the following format: `[data_type, min_nb_elts,
@@ -40,7 +40,7 @@ impl Generator for Vec<Value> {
     /// ["FreeEmail"] // produce a random number of emails
     /// ["FirstName", 1] // produce 1 first name
     /// ["LicencePlate", 1, 10] // produce between 1 and 9 licence plates
-    fn generate(&self, data: &mut Data) -> Res<Self> {
+    fn generate(&self, data: &mut Data) -> Res<Value> {
         let mut iter = self.iter();
 
         let array_item_type = iter.next().ok_or(Error::ArrayMissingDataType)?;
@@ -61,33 +61,31 @@ impl Generator for Vec<Value> {
     }
 }
 
-impl Generator for Value {
+impl Generator<Self> for Value {
     fn generate(&self, data: &mut Data) -> Res<Self> {
-        let generated_json = match self {
+        match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
-                return Err(Error::InvalidSchemaType(format!("{self:?}"))),
-            Self::String(data_type) => Self::String(data_type.generate(data)?),
-            Self::Array(values) => Self::Array(values.generate(data)?),
-            Self::Object(object) => Self::Object(object.generate(data)?),
-        };
-
-        Ok(generated_json)
+                Err(Error::InvalidSchemaType(format!("{self:?}"))),
+            Self::String(data_type) => data_type.generate(data).map(Into::into),
+            Self::Array(values) => values.generate(data),
+            Self::Object(object) => object.generate(data),
+        }
     }
 }
 
-impl NullableGenerator for Value {
+impl NullableGenerator<Self> for Value {
     fn generate_nullable(&self, data: &mut Data) -> Res<Option<Self>> {
         let generated_json = match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 return Err(Error::InvalidSchemaType(format!("{self:?}"))),
             Self::String(data_type) =>
                 if let Some(value) = data_type.generate_nullable(data)? {
-                    Self::String(value)
+                    value.into()
                 } else {
                     return Ok(None);
                 },
-            Self::Array(values) => Self::Array(values.generate(data)?),
-            Self::Object(object) => Self::Object(object.generate(data)?),
+            Self::Array(values) => values.generate(data)?,
+            Self::Object(object) => object.generate(data)?,
         };
 
         Ok(Some(generated_json))

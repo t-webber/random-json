@@ -22,6 +22,6 @@ impl Dialog {
             .items(&data_list)
             .interact()?;
 
-        data_list[selection].generate(&mut data)
+        Ok(data_list[selection].generate(&mut data)?.into_string())
     }
 }

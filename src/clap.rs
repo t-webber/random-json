@@ -7,7 +7,7 @@ use random_data::DataType;
 
 use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
-use crate::generator::{Data, NullableGenerator as _};
+use crate::generator::{Data, Generator as _};
 use crate::json::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
@@ -85,9 +85,7 @@ impl CliArgs {
         let mut data = Data::new(self.user_defined)?;
 
         if let Some(data_type) = self.data_type {
-            return data_type
-                .generate_nullable(&mut data)
-                .map(Option::unwrap_or_default);
+            return Ok(data_type.generate(&mut data)?.into_string());
         }
 
         if self.interactive {
