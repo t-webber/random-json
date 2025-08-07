@@ -6,7 +6,7 @@ description = "A CLI tool to generate random data from a JSON schema to fill dat
 license = "MIT or Apache-2.0"
 repository = "https://github.com/t-webber/fake-json"
 authors = ["Tom Webber <t.c.w.webber@gmail.com>"]
-keywords = ["fake", "json", "cli", "data generation"]
+keywords = ["random", "fake", "json", "cli", "data generation"]
 categories = [
   "Command line utilities",
   "Database interfaces",

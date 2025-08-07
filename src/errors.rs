@@ -32,6 +32,8 @@ pub enum Error {
     ArrayMissingDataType,
     /// Error from the dialoguer crate during user interaction.
     DialogueIo(dialoguer::Error),
+    /// User parsed 2 custom data types with the same name.
+    DuplicateDataType(String),
     /// Failed to parse a JSON node into an integer
     ExpectedInteger(serde_json::Value),
     /// Provided a user defined data type with no values.
@@ -109,7 +111,8 @@ impl Error {
             Self::ArrayInvalidLength{original, ..} => format!("{original} is too large to be the length of an array.{ARRAY_SYNTAX}"),
             Self::FakerDefMissingColon => ("Data types must be given with the format -u 'DataTypeName:Value1|Value2|Value3'").to_owned(),
             Self::FakerDefTooManyColons => "To pass multiple user-defined data types, pass multiple times the `-u` options: -u 'Type1:Value1|Value2' -u 'Type2:Value3|Value4'".to_owned(),
-            Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned()
+            Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned(),
+            Self::DuplicateDataType(data_type) => format!("{data_type} was provided twice with the `-u` option. Please use different names."),
         }
     }
 }
