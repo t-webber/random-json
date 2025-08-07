@@ -2,7 +2,7 @@
 
 extern crate alloc;
 use alloc::fmt;
-use core::num::TryFromIntError;
+use core::num::{ParseIntError, TryFromIntError};
 use core::result;
 use std::io;
 
@@ -51,6 +51,15 @@ pub enum Error {
     },
     /// The data type provided to the generator isn't recognised.
     InvalidDataType(String),
+    /// Failed to parse the numbers in the range definition.
+    ///
+    /// In `a..b`, a or b wasn't found to be an integer.
+    InvalidRangeBounds {
+        /// Bound of the range that produced the error.
+        bound: String,
+        /// Error raised while trying to convert the bound to integer.
+        error: ParseIntError,
+    },
     /// Invalid schema type specified.
     ///
     /// This means a unsupported JSON feature was present, such as booleans,
@@ -96,15 +105,15 @@ impl Error {
     fn repr(&self) -> String {
         match self {
             Self::JsonWriteString(_) |
-                            Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
+                                    Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
             Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),
             Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type.\nUse -l to list the valid data types, -i to fuzzy search the data types, or -u to define your own data types!"),
             Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
             Self::DialogueIo(_) |
-                            Self::TerminalIo(_) =>
-                                "An error occurred whilst interacting with your terminal. ".to_owned(),
+                                    Self::TerminalIo(_) =>
+                                        "An error occurred whilst interacting with your terminal. ".to_owned(),
             Self::ArrayMissingDataType => format!("invalid array syntax: missing data type.{ARRAY_SYNTAX}"),
             Self::ExpectedInteger(value) => format!("invalid aray syntax: expected integer, found {value}.{ARRAY_SYNTAX}"),
             Self::NumberNotAnInteger(number) => format!("invalid array syntax: expected integer, found {number}.{ARRAY_SYNTAX}"),
@@ -113,6 +122,7 @@ impl Error {
             Self::FakerDefTooManyColons => "To pass multiple user-defined data types, pass multiple times the `-u` options: -u 'Type1:Value1|Value2' -u 'Type2:Value3|Value4'".to_owned(),
             Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned(),
             Self::DuplicateDataType(data_type) => format!("{data_type} was provided twice with the `-u` option. Please use different names."),
+            Self::InvalidRangeBounds { bound, ..}=> format!("Invalid range bounds: expected integers, found {bound}."),
         }
     }
 }

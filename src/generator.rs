@@ -38,6 +38,10 @@ pub struct Data {
 impl Data {
     /// Generate non-nullable data of the provided data type.
     fn generate(&mut self, data_type: &str) -> Res<OutputData> {
+        if data_type.contains("..") {
+            return Ok(OutputData::Number(self.generate_range(data_type)?));
+        }
+
         Ok(if let Some(values) = self.user_defined.get(data_type) {
             OutputData::String(
                 values
@@ -70,6 +74,24 @@ impl Data {
         };
 
         self.generate(parsed_data_type).map(Some)
+    }
+
+    /// Generate the data for a range of numbers instead of a data type
+    #[expect(clippy::unwrap_used, clippy::unwrap_in_result, reason = ".. in string")]
+    fn generate_range(&mut self, data_type: &str) -> Res<u32> {
+        let mut split = data_type.split("..");
+        let min_str = split.next().unwrap();
+        let min = min_str
+            .parse()
+            .map_err(|error| Error::InvalidRangeBounds { error, bound: min_str.to_owned() })?;
+        let max = if let Some(max_str) = split.next() {
+            max_str
+                .parse()
+                .map_err(|error| Error::InvalidRangeBounds { error, bound: max_str.to_owned() })?
+        } else {
+            u32::MAX
+        };
+        Ok(self.rng().random_range(min..=max))
     }
 
     /// List all the data types, user defined and from `random-data`.
