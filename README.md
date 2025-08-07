@@ -1,10 +1,10 @@
-# fake-json
+# random-json
 
 A CLI tool to generate random data from a JSON schema to fill databases.
 
 ## Overview
 
-`fake-json` is a command-line utility that generates realistic fake data based on JSON schemas. It's designed to help developers quickly populate databases with test data during development and testing phases.
+`random-json` is a command-line utility that generates realistic fake data based on JSON schemas. It's designed to help developers quickly populate databases with test data during development and testing phases.
 
 ## Features
 
@@ -16,7 +16,7 @@ A CLI tool to generate random data from a JSON schema to fill databases.
 ## Installation
 
 ```bash
-cargo install fake-json
+cargo install random-json
 ```
 
 ## Options
@@ -39,16 +39,16 @@ cargo install fake-json
 
 ```bash
 # Generate data interactively
-fake-json --interactive
+random-json --interactive
 
 # Generate data from a specific schema
-fake-json --schema schema.json
+random-json --schema schema.json
 
 # Generate multiple records that follow the json format.
-fake-json --count 1000
+random-json --count 1000
 
 # List all options
-fake-json --help
+random-json --help
 ```
 
 ### Prisma example
@@ -57,12 +57,12 @@ fake-json --help
 echo '{
   "firstName": "FirstName",
   "lastName": "LastName",
-  "phone_number": "PhoneNumber",
-  "email": "FreeEmail"
+  "phone_number": "PhoneNumber?",
+  "email": "Email"
 }' >schema.json
 
 
-fake-json --count 3 --before "await prisma.person.create({ data: " --after " });
+random-json --count 2 --before "await prisma.person.create({ data: " --after " });
 "
 ```
 
@@ -82,13 +82,6 @@ await prisma.person.create({ data: {
   "phone_number": "02 33 18 29 16",
   "email": "pascal_amet@laposte.fr"
 } });
-
-await prisma.person.create({ data: {
-  "firstName": "Johan",
-  "lastName": "Mangin",
-  "phone_number": "03 79 01 68 02",
-  "email": "thibaud_officiis@hotmail.fr"
-} });
 ```
 
 > [!TIP]
@@ -97,7 +90,7 @@ await prisma.person.create({ data: {
 
 ## Supported Data Types
 
-The tool supports a lots of data types through the [fake](https://github.com/cksac/fake-rs) crate:
+The tool supports a lots of data types through the [random-data](https://github.com/t-webber/random-data) crate:
 
 - _Addresses_: street, states, countries, coordinates, etc.
 - _Dates and times_: timestamps, dates, etc.
@@ -107,12 +100,11 @@ The tool supports a lots of data types through the [fake](https://github.com/cks
 - _Information_: people names, emails, phone numbers, health insurance numbers, etc.
 - _Text_: words, sentences, passwords, etc.
 
-And many more... Use the `fake-json --list` to list all supported data types!
+And many more... Use the `random-json --list` to list all supported data types!
 
 ## Dependencies
 
 - `clap`: Command-line argument parsing
-- `fake`: Fake data generation
 - `serde_json`: JSON serialization/deserialization
 - `dialoguer`: Interactive command-line dialogue to select with fuzzy-finder
 - `chrono`: Date and time handling

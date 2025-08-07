@@ -300,19 +300,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fake-json"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "dialoguer",
- "rand",
- "random-data",
- "reqwest",
- "serde_json",
-]
-
-[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1089,6 +1076,19 @@ version = "0.1.0"
 source = "git+https://github.com/t-webber/random-data#4583e691a66324c4c81a2827c3fd0ba16d66e347"
 dependencies = [
  "rand",
+]
+
+[[package]]
+name = "random-json"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "dialoguer",
+ "rand",
+ "random-data",
+ "reqwest",
+ "serde_json",
 ]
 
 [[package]]
