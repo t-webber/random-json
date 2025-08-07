@@ -19,14 +19,8 @@ readme = "README.md"
 chrono = { version = "0.4.41", features = [] }
 clap = { version = "4.5.42", features = ["derive"] }
 dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
-fake = { version = "4.3.0", features = [
-  "chrono",
-  "geo",
-  "http",
-  "random_color",
-  "time",
-] }
 rand = "0.9.2"
+random-data = { git = "https://github.com/t-webber/random-data", version = "0.1.0" }
 serde_json = "1.0.142"
 
 [build-dependencies]

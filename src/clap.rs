@@ -3,11 +3,11 @@
 use std::fs;
 
 use clap::Parser;
+use random_data::DataType;
 
-use crate::data::auto::get_fakers;
 use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
-use crate::generator::{Fakers, NullableGenerator as _};
+use crate::generator::{Data, NullableGenerator as _};
 use crate::json::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
@@ -78,20 +78,20 @@ impl CliArgs {
             return Err(Error::ListAndInteractiveConflict);
         }
 
-        let mut fakers = Fakers::new(get_fakers(), self.user_defined)?;
+        if self.list {
+            return Ok(DataType::list_str().join("\n"));
+        }
+
+        let mut data = Data::new(self.user_defined)?;
 
         if let Some(data_type) = self.data_type {
             return data_type
-                .generate_nullable(&mut fakers)
+                .generate_nullable(&mut data)
                 .map(Option::unwrap_or_default);
         }
 
         if self.interactive {
-            return Dialog::generate(fakers);
-        }
-
-        if self.list {
-            return Ok(get_fakers().join("\n"));
+            return Dialog::generate(data);
         }
 
         let json = if let Some(json) = self.json {
@@ -106,7 +106,7 @@ impl CliArgs {
             self.after.unwrap_or_default(),
             self.count,
             json,
-            fakers,
+            data,
         )
         .generate()
     }

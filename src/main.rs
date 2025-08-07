@@ -33,14 +33,9 @@
     clippy::question_mark_used,
     reason = "bad lints"
 )]
-#![expect(
-    clippy::mod_module_files,
-    clippy::module_name_repetitions,
-    reason = "chosen style"
-)]
+#![expect(clippy::mod_module_files, reason = "chosen style")]
 
 mod clap;
-mod data;
 mod dialog;
 mod errors;
 mod generator;

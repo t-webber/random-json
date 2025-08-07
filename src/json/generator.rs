@@ -6,13 +6,13 @@ use rand::Rng as _;
 use serde_json::{Map, Value};
 
 use crate::errors::{Error, Res};
-use crate::generator::{Fakers, Generator, NullableGenerator};
+use crate::generator::{Data, Generator, NullableGenerator};
 
 impl Generator for Map<String, Value> {
-    fn generate(&self, fakers: &mut Fakers) -> Res<Self> {
+    fn generate(&self, data: &mut Data) -> Res<Self> {
         let mut new_map = Self::with_capacity(self.len());
         for (key, json_value) in self {
-            if let Some(generated_value) = json_value.generate_nullable(fakers)? {
+            if let Some(generated_value) = json_value.generate_nullable(data)? {
                 new_map.insert(key.to_owned(), generated_value);
             }
         }
@@ -32,14 +32,14 @@ impl Generator for Vec<Value> {
     /// ["FreeEmail"] // produce a random number of emails
     /// ["FirstName", 1] // produce 1 first name
     /// ["LicencePlate", 1, 10] // produce between 1 and 9 licence plates
-    fn generate(&self, fakers: &mut Fakers) -> Res<Self> {
+    fn generate(&self, data: &mut Data) -> Res<Self> {
         let mut iter = self.iter();
 
         let array_item_type = iter.next().ok_or(Error::ArrayMissingDataType)?;
 
         let len = match (iter.next(), iter.next()) {
-            (None, _) => fakers.rng().random_range(1..10),
-            (Some(Value::Number(inf)), Some(Value::Number(sup))) => fakers
+            (None, _) => data.rng().random_range(1..10),
+            (Some(Value::Number(inf)), Some(Value::Number(sup))) => data
                 .rng()
                 .random_range(number_to_int(inf)?..number_to_int(sup)?),
             (Some(Value::Number(inf)), None) => number_to_int(inf)?,
@@ -47,20 +47,20 @@ impl Generator for Vec<Value> {
                 return Err(Error::ExpectedInteger(value.to_owned())),
         };
 
-        repeat_with(|| array_item_type.generate(fakers))
+        repeat_with(|| array_item_type.generate(data))
             .take(len)
             .collect()
     }
 }
 
 impl Generator for Value {
-    fn generate(&self, fakers: &mut Fakers) -> Res<Self> {
+    fn generate(&self, data: &mut Data) -> Res<Self> {
         let generated_json = match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 return Err(Error::InvalidSchemaType(format!("{self:?}"))),
-            Self::String(data_type) => Self::String(data_type.generate(fakers)?),
-            Self::Array(values) => Self::Array(values.generate(fakers)?),
-            Self::Object(object) => Self::Object(object.generate(fakers)?),
+            Self::String(data_type) => Self::String(data_type.generate(data)?),
+            Self::Array(values) => Self::Array(values.generate(data)?),
+            Self::Object(object) => Self::Object(object.generate(data)?),
         };
 
         Ok(generated_json)
@@ -68,18 +68,18 @@ impl Generator for Value {
 }
 
 impl NullableGenerator for Value {
-    fn generate_nullable(&self, fakers: &mut Fakers) -> Res<Option<Self>> {
+    fn generate_nullable(&self, data: &mut Data) -> Res<Option<Self>> {
         let generated_json = match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 return Err(Error::InvalidSchemaType(format!("{self:?}"))),
             Self::String(data_type) =>
-                if let Some(data) = data_type.generate_nullable(fakers)? {
-                    Self::String(data)
+                if let Some(value) = data_type.generate_nullable(data)? {
+                    Self::String(value)
                 } else {
                     return Ok(None);
                 },
-            Self::Array(values) => Self::Array(values.generate(fakers)?),
-            Self::Object(object) => Self::Object(object.generate(fakers)?),
+            Self::Array(values) => Self::Array(values.generate(data)?),
+            Self::Object(object) => Self::Object(object.generate(data)?),
         };
 
         Ok(Some(generated_json))
@@ -90,7 +90,7 @@ impl NullableGenerator for Value {
 fn number_to_int(json_number: &serde_json::Number) -> Res<usize> {
     let number = json_number
         .as_u64()
-        .ok_or(Error::NumberNotAnInteger(json_number.to_owned()))?;
+        .ok_or_else(|| Error::NumberNotAnInteger(json_number.to_owned()))?;
 
     number
         .try_into()

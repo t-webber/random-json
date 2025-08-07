@@ -7,7 +7,7 @@ use core::fmt::Write as _;
 use serde_json::Value;
 
 use crate::errors::{Error, Res};
-use crate::generator::{Fakers, NullableGenerator as _};
+use crate::generator::{Data, NullableGenerator as _};
 
 /// Arguments for generating JSON data based on a schema file.
 pub struct JsonArgs {
@@ -18,7 +18,7 @@ pub struct JsonArgs {
     /// Number of times to repeat the JSON generation.
     count: u32,
     /// Data generator
-    fakers: Fakers,
+    data: Data,
     /// JSON schema content
     json: String,
 }
@@ -31,9 +31,7 @@ impl JsonArgs {
 
         let mut generated_data = String::new();
         for _ in 0..self.count {
-            let generate_json = json
-                .generate_nullable(&mut self.fakers)?
-                .unwrap_or_default();
+            let generate_json = json.generate_nullable(&mut self.data)?.unwrap_or_default();
             let generate_json_str =
                 serde_json::to_string_pretty(&generate_json).map_err(Error::SerdeSerializeJson)?;
             writeln!(generated_data, "{}{generate_json_str}{}", self.before, self.after)
@@ -44,13 +42,7 @@ impl JsonArgs {
     }
 
     /// Create a new instance of `JsonArgs` with the provided parameters.
-    pub const fn new(
-        before: String,
-        after: String,
-        count: u32,
-        json: String,
-        fakers: Fakers,
-    ) -> Self {
-        Self { after, before, count, fakers, json }
+    pub const fn new(before: String, after: String, count: u32, json: String, data: Data) -> Self {
+        Self { after, before, count, data, json }
     }
 }
