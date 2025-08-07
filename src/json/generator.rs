@@ -12,8 +12,16 @@ impl Generator for Map<String, Value> {
     fn generate(&self, data: &mut Data) -> Res<Self> {
         let mut new_map = Self::with_capacity(self.len());
         for (key, json_value) in self {
+            let parsed_key = if let Some(parsed_key) = key.strip_suffix('?') {
+                if data.random_null() {
+                    continue;
+                }
+                parsed_key
+            } else {
+                key
+            };
             if let Some(generated_value) = json_value.generate_nullable(data)? {
-                new_map.insert(key.to_owned(), generated_value);
+                new_map.insert(parsed_key.to_owned(), generated_value);
             }
         }
         Ok(new_map)

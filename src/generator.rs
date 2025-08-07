@@ -52,7 +52,7 @@ impl Data {
     /// Generate nullable data of the provided data type.
     fn generate_nullable(&mut self, data_type: &str) -> Res<Option<String>> {
         let parsed_data_type = if let Some(parsed_data_type) = data_type.strip_suffix('?') {
-            if self.rng.random_bool(0.3) {
+            if self.random_null() {
                 return Ok(None);
             }
             parsed_data_type
@@ -117,6 +117,11 @@ impl Data {
         }
 
         Ok((name.to_owned(), values.split('|').map(str::to_owned).collect()))
+    }
+
+    /// Indicates whether to return null or the data for nullable types.
+    pub fn random_null(&mut self) -> bool {
+        self.rng.random_bool(0.3)
     }
 
     /// Borrows the random generator as mutable.
