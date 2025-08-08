@@ -6,12 +6,7 @@ A CLI tool to generate random data from a JSON schema to fill databases.
 
 `random-json` is a command-line utility that generates realistic fake data based on JSON schemas. It's designed to help developers quickly populate databases with test data during development and testing phases.
 
-## Features
-
-- 🎯 **Schema-driven**: Generate data based on JSON schemas
-- 🎲 **Rich data types**: Support for various data types including dates, emails, names, countries, address, and many more
-- 🗃️ **Database-friendly**: Perfect for filling databases with realistic test data
-- 🔧 **Interactive CLI**: User-friendly command-line interface with interactive prompts, for when you don't know what data-type to choose.
+See list of all the support data types [here](https://github.com/t-webber/random-data?tab=readme-ov-file#available-data-types).
 
 ## Installation
 
@@ -100,21 +95,12 @@ The tool supports a lots of data types through the [random-data](https://github.
 - _Information_: people names, emails, phone numbers, health insurance numbers, etc.
 - _Text_: words, sentences, passwords, etc.
 
-And many more... Use the `random-json --list` to list all supported data types!
+Use the `random-json --list` to list all supported data types.
 
 ## Dependencies
 
 - `clap`: Command-line argument parsing
 - `serde_json`: JSON serialization/deserialization
+- `random-data`: Fake data generation
 - `dialoguer`: Interactive command-line dialogue to select with fuzzy-finder
-- `chrono`: Date and time handling
 - `rand`: Random number generation (e.g. to choose when a nullable field becomes undefined)
-
-## Upcomming features
-
-> [!NOTE]
->
-> Yet to be implemented:
->
-> - nullable arrays and objects
-> - support for fakers with ranges directly in schemas
