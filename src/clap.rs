@@ -116,6 +116,7 @@ impl CliArgs {
         if self.values.is_some() {
             provided.push("values");
         }
+
         provided
     }
 
@@ -143,6 +144,14 @@ impl CliArgs {
 
         if self.list {
             return Ok(DataType::list_str().join("\n"));
+        }
+
+        if let Some(data_type) = self.values {
+            return DataType::try_from(&data_type)
+                .map_err(|()| Error::InvalidDataType(data_type.clone()))?
+                .values()
+                .ok_or_else(|| Error::NonEnumerableDataType(data_type))
+                .map(|list| list.join("\n"));
         }
 
         let mut data = Data::new(self.user_defined)?;
