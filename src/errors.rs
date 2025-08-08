@@ -2,6 +2,7 @@
 
 extern crate alloc;
 use alloc::fmt;
+use core::error::Error as ErrorTrait;
 use core::num::TryFromIntError;
 use core::result;
 use std::io;
@@ -19,7 +20,6 @@ Examples:
 
 /// Custom error types for the crate, for better error handling.
 #[derive(Debug)]
-#[expect(dead_code, reason = "used as return of main")]
 pub enum Error {
     /// Failed to convert JSON number to usize
     ArrayInvalidLength {
@@ -56,7 +56,12 @@ pub enum Error {
     /// Failed to parse the numbers in the range definition.
     ///
     /// In `a..b`, a or b wasn't found to be an integer.
-    InvalidRangeBounds(String),
+    InvalidRangeBounds {
+        /// Invalid bound that caused the error
+        bound: String,
+        /// Actual error of why the bound isn't valid
+        error: Box<dyn ErrorTrait>,
+    },
     /// Invalid schema type specified.
     ///
     /// This means a unsupported JSON feature was present, such as booleans,
@@ -67,10 +72,10 @@ pub enum Error {
     /// User tried to use both `--list` and `--interactive` options, which is
     /// not allowed.
     ListAndInteractiveConflict,
-    /// Faled to parse a JSON number into an unsigned integer
-    NumberNotAnInteger(serde_json::Number),
     /// User-defined type with `|` wasn't provided any values.
     MissingValueBeforePipe,
+    /// Faled to parse a JSON number into an unsigned integer
+    NumberNotAnInteger(serde_json::Number),
     /// File exists but is in an invalid format, that makes the deserialization
     /// fail.
     SerdeDeserializeJson(serde_json::Error),
@@ -100,6 +105,14 @@ impl Error {
         |error: io::Error| Self::FileNotFound { file, error }
     }
 
+    /// Helper function to create a [`Self::InvalidRangeBounds`] error with a
+    /// given bound.
+    pub fn invalid_bounds<E: ErrorTrait + 'static, B: FnOnce() -> String>(
+        bound: B,
+    ) -> impl FnOnce(E) -> Self {
+        |error: E| Self::InvalidRangeBounds { bound: bound(), error: error.into() }
+    }
+
     /// Get a nice and user-friendly error in case of failures.
     fn repr(&self) -> String {
         match self {
@@ -121,7 +134,7 @@ impl Error {
             Self::FakerDefTooManyColons => "To pass multiple user-defined data types, pass multiple times the `-u` options: -u 'Type1:Value1|Value2' -u 'Type2:Value3|Value4'".to_owned(),
             Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned(),
             Self::DuplicateDataType(data_type) => format!("{data_type} was provided twice with the `-u` option. Please use different names."),
-            Self::InvalidRangeBounds ( bound)=> format!("Invalid range bounds: expected integers, found {bound}."),
+            Self::InvalidRangeBounds { bound, ..}=> format!("Invalid range bounds: expected integers, found {bound}."),
             Self::InfinityNotSupported => "Expected finite floating-point number, found infinity.".to_owned(),
             Self::MissingValueBeforePipe => "Entering | in a data_type means you want to define your own enum, but no value was found on either side of |.".to_owned(),
         }

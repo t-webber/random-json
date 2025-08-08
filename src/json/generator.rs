@@ -71,7 +71,7 @@ impl Generator<Self> for Value {
         match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 Err(Error::InvalidSchemaType(format!("{self:?}"))),
-            Self::String(data_type) => data_type.generate(data).map(Into::into),
+            Self::String(data_type) => data_type.generate(data).map(TryInto::try_into)?,
             Self::Array(values) => values.generate(data),
             Self::Object(object) => object.generate(data),
         }
@@ -85,7 +85,7 @@ impl NullableGenerator<Self> for Value {
                 return Err(Error::InvalidSchemaType(format!("{self:?}"))),
             Self::String(data_type) =>
                 if let Some(value) = data_type.generate_nullable(data)? {
-                    value.into()
+                    value.try_into()?
                 } else {
                     return Ok(None);
                 },

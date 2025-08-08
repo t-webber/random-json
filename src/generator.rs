@@ -69,11 +69,14 @@ impl Data {
 
     /// Generate a user-defined data-type, defined with `|`
     fn generate_enum(&mut self, data_type: &str) -> Res<OutputData> {
-        let values = data_type.split('|').collect::<Vec<_>>();
+        let values = data_type
+            .split('|')
+            .filter(|x| !x.is_empty())
+            .collect::<Vec<_>>();
         values
             .choose(self.rng())
             .ok_or(Error::MissingValueBeforePipe)
-            .map(|data| OutputData::String(data.to_string()))
+            .map(|data| OutputData::String((*data).to_owned()))
     }
 
     /// Generate nullable data of the provided data type.
@@ -98,24 +101,26 @@ impl Data {
         if let Ok(min) = min_str.parse() {
             let max = if let Some(max_str) = split.next() {
                 max_str
-                    .parse()
-                    .map_err(|_| Error::InvalidRangeBounds(max_str.to_owned()))?
+                    .parse::<u64>()
+                    .map_err(Error::invalid_bounds(|| min_str.to_owned()))?
             } else {
                 u64::MAX
             };
 
-            Ok(OutputData::Int(self.rng().random_range(min..=max)))
-        } else if let Ok(min) = min_str.parse() {
-            let max = if let Some(max_str) = split.next() {
-                max_str
-                    .parse()
-                    .map_err(|_| Error::InvalidRangeBounds(max_str.to_owned()))?
-            } else {
-                f64::MAX
-            };
-            Ok(OutputData::Float(self.rng().random_range(min..=max)))
-        } else {
-            Err(Error::InvalidRangeBounds(min_str.to_string()))
+            return Ok(OutputData::Int(self.rng().random_range(min..=max)));
+        }
+        match min_str.parse() {
+            Ok(min) => {
+                let max = if let Some(max_str) = split.next() {
+                    max_str
+                        .parse::<f64>()
+                        .map_err(Error::invalid_bounds(|| max_str.to_owned()))?
+                } else {
+                    f64::MAX
+                };
+                Ok(OutputData::Float(self.rng().random_range(min..=max)))
+            }
+            Err(error) => Err(Error::invalid_bounds(|| min_str.to_owned())(error)),
         }
     }
 
