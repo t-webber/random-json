@@ -3,7 +3,6 @@
 use std::fs;
 
 use clap::Parser;
-use random_data::DataType;
 
 use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
@@ -59,21 +58,17 @@ impl CliArgs {
 
         Err(
             if self.list
-                && let Some(other) = find_other_than(&provided, &["list", "user"])
+                && let Some(other) = find_other_than(&provided, &["list", "user", "type"])
             {
                 Error::ConflictingArgs("list", other)
             } else if self.interactive
-                && let Some(other) = find_other_than(&provided, &["interactive", "user"])
+                && let Some(other) = find_other_than(&provided, &["interactive", "user", "type"])
             {
                 Error::ConflictingArgs("interactive", other)
             } else if self.values.is_some()
-                && let Some(other) = find_other_than(&provided, &["values"])
+                && let Some(other) = find_other_than(&provided, &["values", "user", "type"])
             {
                 Error::ConflictingArgs("values", other)
-            } else if self.data_type.is_some()
-                && let Some(other) = find_other_than(&provided, &["type", "count"])
-            {
-                Error::ConflictingArgs("type", other)
             } else if self.json.is_some() && self.schema_file != "schema.json" {
                 Error::ConflictingArgs("json", "schema")
             } else {
@@ -141,20 +136,15 @@ impl CliArgs {
     /// Run the generation based on the parsed CLI arguments.
     fn run(self) -> Res<String> {
         self.check_arguments()?;
-
-        if self.list {
-            return Ok(DataType::list_str().join("\n"));
-        }
+        let mut data = Data::new(self.user_defined)?;
 
         if let Some(data_type) = self.values {
-            return DataType::try_from(&data_type)
-                .map_err(|()| Error::InvalidDataType(data_type.clone()))?
-                .values()
-                .ok_or_else(|| Error::NonEnumerableDataType(data_type))
-                .map(|list| list.join("\n"));
+            return data.values(&data_type);
         }
 
-        let mut data = Data::new(self.user_defined)?;
+        if self.list {
+            return Ok(data.list().join("\n"));
+        }
 
         if let Some(data_type) = self.data_type {
             return Ok(data_type.generate(&mut data)?.into_string());

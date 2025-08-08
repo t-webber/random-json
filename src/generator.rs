@@ -189,6 +189,19 @@ impl Data {
     pub const fn rng(&mut self) -> &mut ThreadRng {
         &mut self.rng
     }
+
+    /// List the possible values of a data-type
+    pub fn values(&self, data_type: &str) -> Res<String> {
+        if let Some(values) = self.user_defined.get(data_type) {
+            Ok(values.join("\n"))
+        } else {
+            DataType::try_from(data_type)
+                .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?
+                .values()
+                .ok_or_else(|| Error::NonEnumerableDataType(data_type.to_owned()))
+                .map(|list| list.join("\n"))
+        }
+    }
 }
 
 impl Generator<OutputData> for String {
