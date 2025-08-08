@@ -34,6 +34,8 @@ pub enum Error {
     DialogueIo(dialoguer::Error),
     /// User parsed 2 custom data types with the same name.
     DuplicateDataType(String),
+    /// Used 2 CLI arguments that make no sense together.
+    ConflictingArgs(&'static str, &'static str),
     /// Failed to parse a JSON node into an integer
     ExpectedInteger(serde_json::Value),
     /// Provided a user defined data type with no values.
@@ -123,9 +125,8 @@ impl Error {
             Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::ListAndInteractiveConflict => "You can't use --interface (-i) and --list (-l) at the same time! Using solely -i will give you an interactive list from which you can choose the data types!".to_owned(),
-            Self::DialogueIo(_) |
-                                    Self::TerminalIo(_) =>
-                                        "An error occurred whilst interacting with your terminal. ".to_owned(),
+            Self::DialogueIo(_) | Self::TerminalIo(_) =>
+                                       "An error occurred whilst interacting with your terminal. ".to_owned(),
             Self::ArrayMissingDataType => format!("invalid array syntax: missing data type.{ARRAY_SYNTAX}"),
             Self::ExpectedInteger(value) => format!("invalid aray syntax: expected integer, found {value}.{ARRAY_SYNTAX}"),
             Self::NumberNotAnInteger(number) => format!("invalid array syntax: expected integer, found {number}.{ARRAY_SYNTAX}"),
@@ -137,6 +138,7 @@ impl Error {
             Self::InvalidRangeBounds { bound, ..}=> format!("Invalid range bounds: expected integers, found {bound}."),
             Self::InfinityNotSupported => "Expected finite floating-point number, found infinity.".to_owned(),
             Self::MissingValueBeforePipe => "Entering | in a data_type means you want to define your own enum, but no value was found on either side of |.".to_owned(),
+            Self::ConflictingArgs(first, second) => format!("You used {first} and {second}, but they make no sense together. Use one or the other."),
         }
     }
 }
