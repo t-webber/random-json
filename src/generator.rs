@@ -6,7 +6,7 @@ use rand::rngs::ThreadRng;
 use rand::seq::IndexedRandom as _;
 use rand::{Rng as _, rng};
 use random_data::{DataGenerator, DataType};
-use serde_json::Value;
+use serde_json::{Number, Value};
 
 use crate::errors::{Error, Res};
 ///
@@ -39,7 +39,10 @@ impl Data {
     /// Generate non-nullable data of the provided data type.
     fn generate(&mut self, data_type: &str) -> Res<OutputData> {
         if data_type.contains("..") {
-            return Ok(OutputData::Number(self.generate_range(data_type)?));
+            return self.generate_range(data_type);
+        }
+        if data_type.contains('|') {
+            return self.generate_enum(data_type);
         }
 
         Ok(if let Some(values) = self.user_defined.get(data_type) {
@@ -49,10 +52,12 @@ impl Data {
                     .ok_or(Error::FakerDefEmpty)?
                     .to_owned(),
             )
-        } else if data_type == "Boolean" {
+        } else if data_type == "Bool" {
             OutputData::Bool(self.rng.random_bool(0.5))
-        } else if data_type == "Number" {
-            OutputData::Number(self.rng.random_range(0..=u32::MAX))
+        } else if data_type == "Int" {
+            OutputData::Int(self.rng.random_range(0..=u64::MAX))
+        } else if data_type == "Float" {
+            OutputData::Float(self.rng.random_range(0.0..=f64::MAX))
         } else {
             OutputData::String(
                 DataType::try_from(data_type)
@@ -60,6 +65,15 @@ impl Data {
                     .random(&mut self.random_data_generator),
             )
         })
+    }
+
+    /// Generate a user-defined data-type, defined with `|`
+    fn generate_enum(&mut self, data_type: &str) -> Res<OutputData> {
+        let values = data_type.split('|').collect::<Vec<_>>();
+        values
+            .choose(self.rng())
+            .ok_or(Error::MissingValueBeforePipe)
+            .map(|data| OutputData::String(data.to_string()))
     }
 
     /// Generate nullable data of the provided data type.
@@ -78,20 +92,31 @@ impl Data {
 
     /// Generate the data for a range of numbers instead of a data type
     #[expect(clippy::unwrap_used, clippy::unwrap_in_result, reason = ".. in string")]
-    fn generate_range(&mut self, data_type: &str) -> Res<u32> {
+    fn generate_range(&mut self, data_type: &str) -> Res<OutputData> {
         let mut split = data_type.split("..");
         let min_str = split.next().unwrap();
-        let min = min_str
-            .parse()
-            .map_err(|error| Error::InvalidRangeBounds { error, bound: min_str.to_owned() })?;
-        let max = if let Some(max_str) = split.next() {
-            max_str
-                .parse()
-                .map_err(|error| Error::InvalidRangeBounds { error, bound: max_str.to_owned() })?
+        if let Ok(min) = min_str.parse() {
+            let max = if let Some(max_str) = split.next() {
+                max_str
+                    .parse()
+                    .map_err(|_| Error::InvalidRangeBounds(max_str.to_owned()))?
+            } else {
+                u64::MAX
+            };
+
+            Ok(OutputData::Int(self.rng().random_range(min..=max)))
+        } else if let Ok(min) = min_str.parse() {
+            let max = if let Some(max_str) = split.next() {
+                max_str
+                    .parse()
+                    .map_err(|_| Error::InvalidRangeBounds(max_str.to_owned()))?
+            } else {
+                f64::MAX
+            };
+            Ok(OutputData::Float(self.rng().random_range(min..=max)))
         } else {
-            u32::MAX
-        };
-        Ok(self.rng().random_range(min..=max))
+            Err(Error::InvalidRangeBounds(min_str.to_string()))
+        }
     }
 
     /// List all the data types, user defined and from `random-data`.
@@ -176,10 +201,12 @@ impl NullableGenerator<OutputData> for String {
 /// Output data of the data generator, modified to have the right type instead
 /// of always string.
 pub enum OutputData {
-    /// Output for "Boolean"
+    /// Output for "Bool"
     Bool(bool),
-    /// Output for "Number"
-    Number(u32),
+    /// Output for "Float" or float ranges
+    Float(f64),
+    /// Output for "Int" or integer ranges.
+    Int(u64),
     /// Output for all the others
     String(String),
 }
@@ -190,18 +217,23 @@ impl OutputData {
         match self {
             Self::Bool(true) => "True".to_owned(),
             Self::Bool(false) => "False".to_owned(),
-            Self::Number(number) => number.to_string(),
+            Self::Float(number) => number.to_string(),
+            Self::Int(number) => number.to_string(),
             Self::String(string) => string,
         }
     }
 }
 
-impl From<OutputData> for Value {
-    fn from(value: OutputData) -> Self {
-        match value {
+impl TryFrom<OutputData> for Value {
+    type Error = Error;
+
+    fn try_from(value: OutputData) -> Res<Self> {
+        Ok(match value {
             OutputData::String(str) => Self::String(str),
-            OutputData::Number(nb) => Self::Number(nb.into()),
+            OutputData::Float(nb) =>
+                Self::Number(Number::from_f64(nb).ok_or(Error::InfinityNotSupported)?),
+            OutputData::Int(nb) => Self::Number(nb.into()),
             OutputData::Bool(bool) => Self::Bool(bool),
-        }
+        })
     }
 }

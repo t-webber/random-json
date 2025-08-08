@@ -2,7 +2,7 @@
 
 extern crate alloc;
 use alloc::fmt;
-use core::num::{ParseIntError, TryFromIntError};
+use core::num::TryFromIntError;
 use core::result;
 use std::io;
 
@@ -49,17 +49,14 @@ pub enum Error {
         /// The underlying I/O error that caused the failure
         error: io::Error,
     },
+    /// If a user asks for `f64::INFINITY`, the program will crash.
+    InfinityNotSupported,
     /// The data type provided to the generator isn't recognised.
     InvalidDataType(String),
     /// Failed to parse the numbers in the range definition.
     ///
     /// In `a..b`, a or b wasn't found to be an integer.
-    InvalidRangeBounds {
-        /// Bound of the range that produced the error.
-        bound: String,
-        /// Error raised while trying to convert the bound to integer.
-        error: ParseIntError,
-    },
+    InvalidRangeBounds(String),
     /// Invalid schema type specified.
     ///
     /// This means a unsupported JSON feature was present, such as booleans,
@@ -72,6 +69,8 @@ pub enum Error {
     ListAndInteractiveConflict,
     /// Faled to parse a JSON number into an unsigned integer
     NumberNotAnInteger(serde_json::Number),
+    /// User-defined type with `|` wasn't provided any values.
+    MissingValueBeforePipe,
     /// File exists but is in an invalid format, that makes the deserialization
     /// fail.
     SerdeDeserializeJson(serde_json::Error),
@@ -122,7 +121,9 @@ impl Error {
             Self::FakerDefTooManyColons => "To pass multiple user-defined data types, pass multiple times the `-u` options: -u 'Type1:Value1|Value2' -u 'Type2:Value3|Value4'".to_owned(),
             Self::FakerDefEmpty => "The provided data type has no values, use -u 'DataTypeName:Value1|Value2|Value3'".to_owned(),
             Self::DuplicateDataType(data_type) => format!("{data_type} was provided twice with the `-u` option. Please use different names."),
-            Self::InvalidRangeBounds { bound, ..}=> format!("Invalid range bounds: expected integers, found {bound}."),
+            Self::InvalidRangeBounds ( bound)=> format!("Invalid range bounds: expected integers, found {bound}."),
+            Self::InfinityNotSupported => "Expected finite floating-point number, found infinity.".to_owned(),
+            Self::MissingValueBeforePipe => "Entering | in a data_type means you want to define your own enum, but no value was found on either side of |.".to_owned(),
         }
     }
 }
