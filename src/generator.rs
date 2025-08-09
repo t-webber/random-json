@@ -29,6 +29,11 @@ pub trait NullableGenerator<T>: Sized {
 pub struct Data {
     /// Radnom data generator
     random_data_generator: DataGenerator,
+    /// Pseudo-random refs
+    ///
+    /// This represents data that is randomly generated once, then used in
+    /// multiple place.
+    refs: HashMap<String, OutputData>,
     /// Random generator
     rng: ThreadRng,
     /// User-defined data types
@@ -38,6 +43,11 @@ pub struct Data {
 impl Data {
     /// Generate non-nullable data of the provided data type.
     fn generate(&mut self, data_type: &str) -> Res<OutputData> {
+        if let Some(parsed) = data_type.strip_suffix(']')
+            && let Some(pos) = parsed.rfind('[')
+        {
+            return self.generate_ref(parsed, pos);
+        }
         if data_type.contains("..") {
             return self.generate_range(data_type);
         }
@@ -45,7 +55,7 @@ impl Data {
             return self.generate_enum(data_type);
         }
 
-        Ok(if let Some(values) = self.user_defined.get(data_type) {
+        let value = if let Some(values) = self.user_defined.get(data_type) {
             OutputData::String(
                 values
                     .choose(&mut self.rng)
@@ -57,14 +67,16 @@ impl Data {
         } else if data_type == "Int" {
             OutputData::Int(self.rng.random_range(0..=u64::MAX))
         } else if data_type == "Float" {
-            OutputData::Float(self.rng.random_range(0.0..=f64::MAX))
+            OutputData::Float(self.rng.random_range(0.0f64..=f64::MAX))
         } else {
             OutputData::String(
                 DataType::try_from(data_type)
                     .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?
                     .random(&mut self.random_data_generator),
             )
-        })
+        };
+
+        Ok(value)
     }
 
     /// Generate a user-defined data-type, defined with `|`
@@ -124,6 +136,19 @@ impl Data {
         }
     }
 
+    /// Generate random data with a given ref
+    fn generate_ref(&mut self, data_type: &str, ref_position: usize) -> Res<OutputData> {
+        let (type_name, ref_name) = data_type.split_at(ref_position);
+        let key = ref_name.get(1..).unwrap_or_default();
+        if let Some(value) = self.refs.get(key) {
+            Ok(value.to_owned())
+        } else {
+            let value = self.generate(type_name)?;
+            self.refs.insert(key.to_owned(), value.clone());
+            Ok(value)
+        }
+    }
+
     /// List all the data types, user defined and from `random-data`.
     pub fn list(&self) -> Vec<String> {
         let random_data_types = DataType::list_str();
@@ -157,7 +182,12 @@ impl Data {
             }
         }
 
-        Ok(Self { random_data_generator: DataGenerator::new(), user_defined, rng: rng() })
+        Ok(Self {
+            random_data_generator: DataGenerator::new(),
+            user_defined,
+            rng: rng(),
+            refs: HashMap::new(),
+        })
     }
 
     /// Parse a user-defined data-type, with the format
@@ -218,6 +248,7 @@ impl NullableGenerator<OutputData> for String {
 
 /// Output data of the data generator, modified to have the right type instead
 /// of always string.
+#[derive(Clone)]
 pub enum OutputData {
     /// Output for "Bool"
     Bool(bool),
