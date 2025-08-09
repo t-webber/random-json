@@ -84,6 +84,15 @@ pub enum Error {
     SerdeSerializeJson(serde_json::Error),
     /// General I/O error from terminal interaction.
     TerminalIo(io::Error),
+    /// User required different calls to give different values, but it is either
+    /// impossible or the probability is very thin
+    UniqueFetchFailed {
+        /// Number of elements that were produced before not being able to
+        /// create anymore.
+        already_produced: usize,
+        /// Data type that caused the error
+        data_type: String,
+    },
 }
 
 impl Error {
@@ -117,6 +126,7 @@ impl Error {
     /// Get a nice and user-friendly error in case of failures.
     fn repr(&self) -> String {
         match self {
+            Self::UniqueFetchFailed{data_type, already_produced} => format!("Tried to generate a different value of {data_type} at every generation, but it is either impossible or the probability is very thin. Stop producing at {already_produced} different entries."),
             Self::JsonWriteString(_) |
                                     Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
             Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),

@@ -1,6 +1,7 @@
 //! Define traits to apply the data generator on all sorts of types.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 use rand::rngs::ThreadRng;
 use rand::seq::IndexedRandom as _;
@@ -36,6 +37,8 @@ pub struct Data {
     refs: HashMap<String, OutputData>,
     /// Random generator
     rng: ThreadRng,
+    /// Data types that were required to be unique.
+    uniq_types: HashMap<String, HashSet<OutputData>>,
     /// User-defined data types
     user_defined: HashMap<String, Vec<String>>,
 }
@@ -47,6 +50,9 @@ impl Data {
             && let Some(pos) = parsed.rfind('[')
         {
             return self.generate_ref(parsed, pos);
+        }
+        if let Some(parsed) = data_type.strip_suffix('*') {
+            return self.generate_unique(parsed);
         }
         if data_type.contains("..") {
             return self.generate_range(data_type);
@@ -149,6 +155,28 @@ impl Data {
         }
     }
 
+    /// Generate a data type that must be different at every generation.
+    fn generate_unique(&mut self, data_type: &str) -> Res<OutputData> {
+        if self.uniq_types.contains_key(data_type) {
+            for _ in 0..10_000 {
+                let generated_data = self.generate(data_type)?;
+                #[expect(clippy::unwrap_used, reason = "generate can't empty uniq_types")]
+                let banned = self.uniq_types.get_mut(data_type).unwrap();
+                if !banned.contains(&generated_data) {
+                    banned.insert(generated_data.clone());
+                    return Ok(generated_data);
+                }
+            }
+            let already_produced = self.uniq_types.get_mut(data_type).unwrap().len();
+            Err(Error::UniqueFetchFailed { data_type: data_type.to_owned(), already_produced })
+        } else {
+            let generated_data = self.generate(data_type)?;
+            self.uniq_types
+                .insert(data_type.to_owned(), HashSet::from([generated_data.clone()]));
+            Ok(generated_data)
+        }
+    }
+
     /// List all the data types, user defined and from `random-data`.
     pub fn list(&self) -> Vec<String> {
         let random_data_types = DataType::list_str();
@@ -187,6 +215,7 @@ impl Data {
             user_defined,
             rng: rng(),
             refs: HashMap::new(),
+            uniq_types: HashMap::new(),
         })
     }
 
@@ -248,7 +277,7 @@ impl NullableGenerator<OutputData> for String {
 
 /// Output data of the data generator, modified to have the right type instead
 /// of always string.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum OutputData {
     /// Output for "Bool"
     Bool(bool),
@@ -258,6 +287,20 @@ pub enum OutputData {
     Int(u64),
     /// Output for all the others
     String(String),
+}
+
+impl Eq for OutputData {}
+
+impl Hash for OutputData {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match self {
+            OutputData::Bool(b) => b.hash(state),
+            OutputData::Float(f) => f.to_bits().hash(state),
+            OutputData::Int(i) => i.hash(state),
+            OutputData::String(s) => s.hash(state),
+        }
+    }
 }
 
 impl OutputData {
