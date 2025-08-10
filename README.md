@@ -46,6 +46,10 @@ random-json --count 1000
 random-json --help
 ```
 
+### Usage guide
+
+See [USAGE.md](USAGE.md) for more details on the schema and CLI syntax.
+
 ### Prisma example
 
 ```bash

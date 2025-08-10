@@ -125,7 +125,7 @@ impl Data {
                 u64::MAX
             };
 
-            return Ok(OutputData::Int(self.rng().random_range(min..=max)));
+            return Ok(OutputData::Int(self.rng().random_range(min..max)));
         }
         match min_str.parse() {
             Ok(min) => {
@@ -136,7 +136,7 @@ impl Data {
                 } else {
                     f64::MAX
                 };
-                Ok(OutputData::Float(self.rng().random_range(min..=max)))
+                Ok(OutputData::Float(self.rng().random_range(min..max)))
             }
             Err(error) => Err(Error::invalid_bounds(|| min_str.to_owned())(error)),
         }

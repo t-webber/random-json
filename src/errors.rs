@@ -129,7 +129,7 @@ impl Error {
             Self::UniqueFetchFailed{data_type, already_produced} => format!("Tried to generate a different value of {data_type} at every generation, but it is either impossible or the probability is very thin. Stop producing at {already_produced} different entries."),
             Self::JsonWriteString(_) |
                                     Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
-            Self::FileNotFound { file, .. } => format!("{file} couldn't be found, ensure it exists and is accessible! You can also use the --json option to "),
+            Self::FileNotFound { file, .. } => format!("{file} wasn't be found, ensure it exists and is accessible! You can also use the --json option to "),
             Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type.\nUse -l to list the valid data types, -i to fuzzy search the data types, or -u to define your own data types!"),
             Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
