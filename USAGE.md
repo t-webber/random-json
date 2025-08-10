@@ -4,6 +4,31 @@ Let's take an example of schema and explain every feature available:
 
 ```json
 {
+  "given_name": "FirstName",
+  "family_name": "LastName[1]",
+  "age": "0..100*",
+  "email?": "Email",
+  "salary": "High|Medium|Low",
+  "job": ["Job", 2, 5],
+  "address?": {
+    "nb": "StreetNumber",
+    "street": "Street",
+    "postal_code": "UkPostCode",
+    "city": "City",
+    "country": "Country",
+    "owner": "LastName[1]"
+  },
+  "data_origin!": {
+    "cli": "random-json",
+    "url": "https://github.com/t-webber/random-json"
+  }
+}
+```
+
+An example of output is
+
+```json
+{
   "address": {
     "city": "Delhi",
     "country": "Singapore",
@@ -23,31 +48,6 @@ Let's take an example of schema and explain every feature available:
   "received_invitation": "True",
   "received_letter": false,
   "salary": "Low"
-}
-```
-
-An example of output is
-
-```json
-{
-  "address": {
-    "city": "Helsinki",
-    "country": "Montenegro",
-    "nb": "30",
-    "owner": "Perry",
-    "postal_code": "B9I 1WY",
-    "street": "La Rambla"
-  },
-  "age": 78,
-  "data_origin": {
-    "cli": "random-json",
-    "url": "https://github.com/t-webber/random-json"
-  },
-  "family_name": "Perry",
-  "given_name": "Jocelyn",
-  "received_invitation": "True",
-  "received_letter": true,
-  "salary": "Medium"
 }
 ```
 

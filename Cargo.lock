@@ -1073,7 +1073,8 @@ dependencies = [
 [[package]]
 name = "random-data"
 version = "0.1.0"
-source = "git+https://github.com/t-webber/random-data#4583e691a66324c4c81a2827c3fd0ba16d66e347"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c31b305a96648fea5dc93e7a33a794c14f3d4ba5674588f9f5eb772e5c4141b9"
 dependencies = [
  "rand",
 ]
