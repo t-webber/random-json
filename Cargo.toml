@@ -23,6 +23,3 @@ dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 rand = "0.9.2"
 random-data = "0.1.0"
 serde_json = "1.0.142"
-
-[build-dependencies]
-reqwest = { version = "0.12", features = ["blocking", "rustls-tls"] }

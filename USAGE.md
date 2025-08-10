@@ -74,7 +74,7 @@ Fuzzy find your data-type.
 random-json -i
 ```
 
-![Video example of Interactive mode](docs/interactive.mp4)
+https://github.com/user-attachments/assets/bb4370ea-818b-42a0-9bc7-7a385aad4d6d
 
 ## Enums
 
