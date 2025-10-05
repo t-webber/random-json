@@ -1,6 +1,6 @@
 //! CLI to generate some fake data under JSON format.
 
-#![warn(
+#![deny(
     missing_docs,
     warnings,
     deprecated_safe,
