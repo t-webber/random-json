@@ -2,8 +2,8 @@
 
 //pub mod range;
 
-use dialoguer::theme::ColorfulTheme as ColourfulTheme;
 use dialoguer::FuzzySelect;
+use dialoguer::theme::ColorfulTheme as ColourfulTheme;
 use rand::RngCore;
 
 use crate::errors::Res;

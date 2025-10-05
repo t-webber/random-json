@@ -31,6 +31,7 @@
     clippy::implicit_return,
     clippy::pattern_type_mismatch,
     clippy::question_mark_used,
+    clippy::missing_trait_methods,
     reason = "bad lints"
 )]
 #![expect(
@@ -38,7 +39,6 @@
     clippy::unseparated_literal_suffix,
     reason = "chosen style"
 )]
-#![expect(clippy::unwrap_in_result, reason = "unwrap_used is active")]
 
 mod clap;
 mod dialog;

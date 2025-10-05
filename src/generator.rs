@@ -1,7 +1,8 @@
 //! Define traits to apply the data generator on all sorts of types.
 
+use core::hash::{Hash, Hasher};
+use core::mem::discriminant;
 use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
 
 use rand::rngs::ThreadRng;
 use rand::seq::IndexedRandom as _;
@@ -112,7 +113,7 @@ impl<Rng: RngCore> Data<Rng> {
     }
 
     /// Generate the data for a range of numbers instead of a data type
-    #[expect(clippy::unwrap_used, clippy::unwrap_in_result, reason = ".. in string")]
+    #[expect(clippy::unwrap_used, reason = ".. in string")]
     fn generate_range(&mut self, data_type: &str) -> Res<OutputData> {
         let mut split = data_type.split("..");
         let min_str = split.next().unwrap();
@@ -156,11 +157,11 @@ impl<Rng: RngCore> Data<Rng> {
     }
 
     /// Generate a data type that must be different at every generation.
+    #[expect(clippy::unwrap_used, reason = "generate can't empty uniq_types")]
     fn generate_unique(&mut self, data_type: &str) -> Res<OutputData> {
         if self.uniq_types.contains_key(data_type) {
             for _ in 0..10_000 {
                 let generated_data = self.generate(data_type)?;
-                #[expect(clippy::unwrap_used, reason = "generate can't empty uniq_types")]
                 let banned = self.uniq_types.get_mut(data_type).unwrap();
                 if !banned.contains(&generated_data) {
                     banned.insert(generated_data.clone());
@@ -200,7 +201,6 @@ impl<Rng: RngCore> Data<Rng> {
 
     /// Parse a user-defined data-type, with the format
     /// `Name:Value1|Value2|Value3`.
-    #[expect(clippy::unwrap_in_result, reason = "unwrap_used lint is active")]
     fn parse_user_defined(user_input: &str) -> Res<(String, Vec<String>)> {
         let mut split = user_input.split(':');
 
@@ -294,13 +294,13 @@ pub enum OutputData {
 impl Eq for OutputData {}
 
 impl Hash for OutputData {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        core::mem::discriminant(self).hash(state);
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        discriminant(self).hash(state);
         match self {
-            OutputData::Bool(b) => b.hash(state),
-            OutputData::Float(f) => f.to_bits().hash(state),
-            OutputData::Int(i) => i.hash(state),
-            OutputData::String(s) => s.hash(state),
+            Self::Bool(bool) => bool.hash(state),
+            Self::Float(float) => float.to_bits().hash(state),
+            Self::Int(int) => int.hash(state),
+            Self::String(string) => string.hash(state),
         }
     }
 }
