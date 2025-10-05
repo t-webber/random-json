@@ -39,6 +39,7 @@
     clippy::unseparated_literal_suffix,
     reason = "chosen style"
 )]
+#![allow(clippy::unwrap_in_result, reason = "unwrap_used is active")]
 
 mod clap;
 mod dialog;
