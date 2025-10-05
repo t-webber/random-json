@@ -1,4 +1,4 @@
-name: Docs
+name: Formatting
 
 on:
     push:
@@ -12,11 +12,8 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    doc:
+    fmt:
         runs-on: ubuntu-latest
-        strategy:
-          matrix:
-            rust: [stable, nightly]
 
         steps:
             - name: Checkout repository
@@ -25,9 +22,14 @@ jobs:
             - name: Install Rust
               uses: actions-rs/toolchain@v1
               with:
-                toolchain: ${{ matrix.rust }}
+                toolchain: nightly
                 override: true
+                components: rustfmt
 
-            - name: Check documentation
-              run: RUSTDOCFLAGS="-D warnings" cargo doc --document-private-items --all --verbose --release
+            - name: Build
+              run: cargo build
+
+
+            - name: Check formatting
+              run: cargo fmt -- --check
 

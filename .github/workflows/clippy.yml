@@ -1,4 +1,4 @@
-name: Clippy
+name: Lints
 
 on:
     push:
