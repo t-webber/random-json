@@ -306,7 +306,7 @@ impl Hash for OutputData {
 }
 
 impl OutputData {
-    /// Convert an [`OutputValue`] to the inner value in string format
+    /// Convert an [`OutputData`] to the inner value in string format
     pub fn into_string(self) -> String {
         match self {
             Self::Bool(true) => "True".to_owned(),
