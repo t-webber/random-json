@@ -244,7 +244,7 @@ impl<Rng: RngCore> Data<Rng> {
 
 impl Data<ThreadRng> {
     /// Build the [`Data`] handler from user inputs
-    pub fn new(input_data: Vec<String>) -> Res<Self> {
+    pub fn new(input_data: Vec<String>, _seed: Option<u64>) -> Res<Self> {
         let mut user_defined = HashMap::new();
 
         for data_type in input_data {

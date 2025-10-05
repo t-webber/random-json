@@ -49,6 +49,9 @@ pub struct CliArgs {
     /// Debug errors with more precise information.
     #[arg(short, long, default_value_t = false)]
     debug: bool,
+    /// Generate with a given random seed
+    #[arg(short, long)]
+    seed: Option<u64>,
 }
 
 impl CliArgs {
@@ -56,28 +59,33 @@ impl CliArgs {
     fn check_arguments(&self) -> Res<()> {
         let provided = self.list_provided();
 
-        Err(
-            if self.list
-                && let Some(other) = find_other_than(&provided, &["list", "user", "type"])
-            {
-                Error::ConflictingArgs("list", other)
-            } else if self.interactive
-                && let Some(other) = find_other_than(&provided, &["interactive", "user", "type"])
-            {
-                Error::ConflictingArgs("interactive", other)
-            } else if self.values.is_some()
-                && let Some(other) = find_other_than(&provided, &["values", "user", "type"])
-            {
-                Error::ConflictingArgs("values", other)
-            } else if self.json.is_some() && self.schema_file != "schema.json" {
-                Error::ConflictingArgs("json", "schema")
-            } else {
-                return Ok(());
-            },
-        )
+        let conflicting_arguments = if self.list
+            && let Some(other) = find_other_than(&provided, &["list", "user", "type"])
+        {
+            ("list", other)
+        } else if self.interactive
+            && let Some(other) = find_other_than(&provided, &["interactive", "user", "type"])
+        {
+            ("interactive", other)
+        } else if self.values.is_some()
+            && let Some(other) = find_other_than(&provided, &["values", "user", "type"])
+        {
+            ("values", other)
+        } else if self.json.is_some() && self.schema_file != "schema.json" {
+            ("json", "schema")
+        } else if self.seed.is_some() && self.list {
+            ("seed", "list")
+        } else {
+            return Ok(());
+        };
+
+        Err(Error::ConflictingArgs(conflicting_arguments.0, conflicting_arguments.1))
     }
 
-    /// Count the number of provided arguments
+    /// Count the number of provided arguments that may invalidate others
+    ///
+    /// This excludes flags, like `--debug`, or options that can always be
+    /// passed, like `--seed`.
     fn list_provided(&self) -> Vec<&'static str> {
         let mut provided = Vec::with_capacity(5);
 
@@ -136,7 +144,7 @@ impl CliArgs {
     /// Run the generation based on the parsed CLI arguments.
     fn run(self) -> Res<String> {
         self.check_arguments()?;
-        let mut data = Data::new(self.user_defined)?;
+        let mut data = Data::new(self.user_defined, self.seed)?;
 
         if let Some(data_type) = self.values {
             return data.values(&data_type);
