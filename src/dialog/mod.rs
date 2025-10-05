@@ -2,8 +2,9 @@
 
 //pub mod range;
 
-use dialoguer::FuzzySelect;
 use dialoguer::theme::ColorfulTheme as ColourfulTheme;
+use dialoguer::FuzzySelect;
+use rand::RngCore;
 
 use crate::errors::Res;
 use crate::generator::{Data, Generator as _};
@@ -14,7 +15,7 @@ pub struct Dialog;
 impl Dialog {
     /// Generate data from a dialogue selection.
     #[expect(clippy::indexing_slicing, reason = "can't be out of bounds")]
-    pub fn generate(mut data: Data) -> Res<String> {
+    pub fn generate<Rng: RngCore>(mut data: Data<Rng>) -> Res<String> {
         let data_list = data.list();
 
         let selection = FuzzySelect::with_theme(&ColourfulTheme::default())

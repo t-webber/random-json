@@ -2,14 +2,14 @@
 
 use core::iter::repeat_with;
 
-use rand::Rng as _;
+use rand::{Rng as _, RngCore};
 use serde_json::{Map, Value};
 
 use crate::errors::{Error, Res};
 use crate::generator::{Data, Generator, NullableGenerator};
 
 impl Generator<Value> for Map<String, Value> {
-    fn generate(&self, data: &mut Data) -> Res<Value> {
+    fn generate<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Value> {
         let mut new_map = Self::with_capacity(self.len());
         for (key, json_value) in self {
             if let Some(parsed_key) = key.strip_suffix('!') {
@@ -45,7 +45,7 @@ impl Generator<Value> for Vec<Value> {
     /// ["FreeEmail"] // produce a random number of emails
     /// ["FirstName", 1] // produce 1 first name
     /// ["LicencePlate", 1, 10] // produce between 1 and 9 licence plates
-    fn generate(&self, data: &mut Data) -> Res<Value> {
+    fn generate<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Value> {
         let mut iter = self.iter();
 
         let array_item_type = iter.next().ok_or(Error::ArrayMissingDataType)?;
@@ -67,7 +67,7 @@ impl Generator<Value> for Vec<Value> {
 }
 
 impl Generator<Self> for Value {
-    fn generate(&self, data: &mut Data) -> Res<Self> {
+    fn generate<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Self> {
         match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 Err(Error::InvalidSchemaType(format!("{self:?}"))),
@@ -79,7 +79,7 @@ impl Generator<Self> for Value {
 }
 
 impl NullableGenerator<Self> for Value {
-    fn generate_nullable(&self, data: &mut Data) -> Res<Option<Self>> {
+    fn generate_nullable<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Option<Self>> {
         let generated_json = match self {
             Self::Null | Self::Bool(_) | Self::Number(_) =>
                 return Err(Error::InvalidSchemaType(format!("{self:?}"))),
