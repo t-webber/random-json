@@ -10,20 +10,7 @@ use serde_json::{Number, Value};
 
 use crate::data_generator::RandomDataGenerator;
 use crate::errors::{Error, Res};
-///
-/// Generate random data of the given type.
-pub trait Generator<T>: Sized {
-    /// Generate random data of the given type.
-    fn generate(&self, data: &mut Data) -> Res<T>;
-}
-
-/// Generate random data of the given type, but with a nullable type.
-pub trait NullableGenerator<T>: Sized {
-    /// Generate random data of the given type, but with a nullable type.
-    ///
-    /// This can sometimes returns None.
-    fn generate_nullable(&self, data: &mut Data) -> Res<Option<T>>;
-}
+use crate::generator_trait::{Generator, NullableGenerator};
 
 /// Contains the list of data types and the random generator to apply
 /// generators.

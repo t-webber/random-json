@@ -5,8 +5,9 @@
 use dialoguer::FuzzySelect;
 use dialoguer::theme::ColorfulTheme as ColourfulTheme;
 
+use crate::data::Data;
 use crate::errors::Res;
-use crate::generator::{Data, Generator as _};
+use crate::generator_trait::Generator as _;
 
 /// Dialog to fuzzy search, select and generate some data of a data type.
 pub struct Dialog;

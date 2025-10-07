@@ -6,8 +6,9 @@ use core::fmt::Write as _;
 
 use serde_json::Value;
 
+use crate::data::Data;
 use crate::errors::{Error, Res};
-use crate::generator::{Data, NullableGenerator as _};
+use crate::generator_trait::NullableGenerator as _;
 
 /// Arguments for generating JSON data based on a schema file.
 pub struct JsonArgs {

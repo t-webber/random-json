@@ -4,8 +4,9 @@ use core::iter::repeat_with;
 
 use serde_json::{Map, Value};
 
+use crate::data::Data;
 use crate::errors::{Error, Res};
-use crate::generator::{Data, Generator, NullableGenerator};
+use crate::generator_trait::{Generator, NullableGenerator};
 
 impl Generator<Value> for Map<String, Value> {
     fn generate(&self, data: &mut Data) -> Res<Value> {
