@@ -4,9 +4,7 @@ use core::hash::{Hash, Hasher};
 use core::mem::discriminant;
 use std::collections::{HashMap, HashSet};
 
-use rand::rngs::ThreadRng;
-use rand::seq::IndexedRandom as _;
-use rand::{Rng as _, rng};
+use rand::distr::uniform::{SampleRange, SampleUniform};
 use random_data::DataType;
 use serde_json::{Number, Value};
 
@@ -30,15 +28,13 @@ pub trait NullableGenerator<T>: Sized {
 /// Contains the list of data types and the random generator to apply
 /// generators.
 pub struct Data {
-    /// Radnom data generator
-    random_data_generator: RandomDataGenerator,
     /// Pseudo-random refs
     ///
     /// This represents data that is randomly generated once, then used in
     /// multiple place.
     refs: HashMap<String, OutputData>,
-    /// Random generator
-    rng: ThreadRng,
+    /// Radnom data generator
+    rng: RandomDataGenerator,
     /// Data types that were required to be unique.
     uniq_types: HashMap<String, HashSet<OutputData>>,
     /// User-defined data types
@@ -65,20 +61,20 @@ impl Data {
 
         let value = if let Some(values) = self.user_defined.get(data_type) {
             OutputData::String(
-                values
-                    .choose(&mut self.rng)
+                self.rng
+                    .choose(values)
                     .ok_or(Error::FakerDefEmpty)?
                     .to_owned(),
             )
         } else if data_type == "Bool" {
             OutputData::Bool(self.rng.random_bool(0.5))
         } else if data_type == "Int" {
-            OutputData::Int(self.rng.random_range(0..=u64::MAX))
+            OutputData::Int(self.random_range(0..=u64::MAX))
         } else if data_type == "Float" {
-            OutputData::Float(self.rng.random_range(0.0f64..=f64::MAX))
+            OutputData::Float(self.random_range(0.0f64..=f64::MAX))
         } else {
             OutputData::String(
-                self.random_data_generator.random_value(
+                self.rng.random_value(
                     DataType::try_from(data_type)
                         .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?,
                 ),
@@ -94,8 +90,8 @@ impl Data {
             .split('|')
             .filter(|x| !x.is_empty())
             .collect::<Vec<_>>();
-        values
-            .choose(self.rng())
+        self.rng
+            .choose(&values)
             .ok_or(Error::MissingValueBeforePipe)
             .map(|data| OutputData::String((*data).to_owned()))
     }
@@ -128,7 +124,7 @@ impl Data {
                 u64::MAX
             };
 
-            return Ok(OutputData::Int(self.rng().random_range(min..max)));
+            return Ok(OutputData::Int(self.random_range(min..max)));
         }
         match min_str.parse() {
             Ok(min) => {
@@ -139,7 +135,7 @@ impl Data {
                 } else {
                     f64::MAX
                 };
-                Ok(OutputData::Float(self.rng().random_range(min..max)))
+                Ok(OutputData::Float(self.random_range(min..max)))
             }
             Err(error) => Err(Error::invalid_bounds(|| min_str.to_owned())(error)),
         }
@@ -214,9 +210,8 @@ impl Data {
         }
 
         Ok(Self {
-            random_data_generator: RandomDataGenerator::new(seed),
+            rng: RandomDataGenerator::new(seed),
             user_defined,
-            rng: rng(),
             refs: HashMap::new(),
             uniq_types: HashMap::new(),
         })
@@ -246,9 +241,13 @@ impl Data {
         self.rng.random_bool(0.3)
     }
 
-    /// Borrows the random generator as mutable.
-    pub const fn rng(&mut self) -> &mut ThreadRng {
-        &mut self.rng
+    /// Chooses an element from a range with the random generator
+    pub fn random_range<T, R>(&mut self, range: R) -> T
+    where
+        T: SampleUniform,
+        R: SampleRange<T>,
+    {
+        self.rng.random_range(range)
     }
 
     /// List the possible values of a data-type

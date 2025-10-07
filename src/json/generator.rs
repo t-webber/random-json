@@ -2,7 +2,6 @@
 
 use core::iter::repeat_with;
 
-use rand::Rng as _;
 use serde_json::{Map, Value};
 
 use crate::errors::{Error, Res};
@@ -51,10 +50,9 @@ impl Generator<Value> for Vec<Value> {
         let array_item_type = iter.next().ok_or(Error::ArrayMissingDataType)?;
 
         let len = match (iter.next(), iter.next()) {
-            (None, _) => data.rng().random_range(1..10),
-            (Some(Value::Number(inf)), Some(Value::Number(sup))) => data
-                .rng()
-                .random_range(number_to_int(inf)?..number_to_int(sup)?),
+            (None, _) => data.random_range(1..10),
+            (Some(Value::Number(inf)), Some(Value::Number(sup))) =>
+                data.random_range(number_to_int(inf)?..number_to_int(sup)?),
             (Some(Value::Number(inf)), None) => number_to_int(inf)?,
             (Some(Value::Number(_)), Some(value)) | (Some(value), _) =>
                 return Err(Error::ExpectedInteger(value.to_owned())),
