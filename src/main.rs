@@ -42,10 +42,11 @@
 #![allow(clippy::unwrap_in_result, reason = "unwrap_used is active")]
 
 mod clap;
+mod data;
 mod data_generator;
 mod dialog;
 mod errors;
-mod generator;
+mod generator_trait;
 mod json;
 
 fn main() {

@@ -6,7 +6,8 @@ use clap::Parser;
 
 use crate::dialog::Dialog;
 use crate::errors::{Error, Res};
-use crate::generator::{Data, Generator as _};
+use crate::data::Data;
+use crate::generator_trait::Generator as _;
 use crate::json::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
