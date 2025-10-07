@@ -17,17 +17,19 @@ cargo install random-json
 ## Options
 
 ```txt
-  -c, --count <COUNT>        Number of times to repeat the JSON [default: 1]
-  -b, --before <BEFORE>      String to print before every data generation of the JSON schema
-  -a, --after <AFTER>        String to print after every data generation of the JSON schema
-  -f, --file <SCHEMA_FILE>   Path to the json schema [default: schema.json]
-  -j, --json <JSON>          Pass the JSON from stdout instead of via a json file. Overrides the --file option
-  -t, --type <DATA_TYPE>     Generates some data of the given data type. Overrides the other options
-  -u, --user <USER_DEFINED>  Add custom data types
-  -i, --interactive          Select the data type with a dialog and fuzzy search. Overrides the other options
-  -l, --list                 List all available data types. Overrides the other options
-  -d, --debug                Debug errors with more precise information
-  -h, --help                 Print help
+  -c, --count <COUNT>         Number of times to repeat the JSON [default: 1]
+  -b, --before <BEFORE>       String to print before every JSON generation
+  -a, --after <AFTER>         String to print after every JSON generation
+  -f, --schema <SCHEMA_FILE>  Path to the json schema [default: schema.json]
+  -j, --json <JSON>           Pass the JSON from stdout instead of via a json file
+  -t, --type <DATA_TYPE>      Generates some data of the given data type
+  -u, --user <USER_DEFINED>   Add custom data types, with the format 'Type:Value1|Value2'
+  -i, --interactive           Select the data type with a dialog and fuzzy search
+  -l, --list                  List all available data types
+  -v, --values <VALUES>       List all values of a type
+  -d, --debug                 Debug errors with more precise information
+  -s, --seed <SEED>           Generate with a given random seed
+  -h, --help                  Print help
 ```
 
 ## Examples
