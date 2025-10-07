@@ -4,14 +4,13 @@ mod generator;
 
 use core::fmt::Write as _;
 
-use rand::RngCore;
 use serde_json::Value;
 
 use crate::errors::{Error, Res};
 use crate::generator::{Data, NullableGenerator as _};
 
 /// Arguments for generating JSON data based on a schema file.
-pub struct JsonArgs<Rng: RngCore> {
+pub struct JsonArgs {
     /// String to print after every data generation of the JSON schema.
     after: String,
     /// String to print before every data generation of the JSON schema.
@@ -19,12 +18,12 @@ pub struct JsonArgs<Rng: RngCore> {
     /// Number of times to repeat the JSON generation.
     count: u32,
     /// Data generator
-    data: Data<Rng>,
+    data: Data,
     /// JSON schema content
     json: String,
 }
 
-impl<Rng: RngCore> JsonArgs<Rng> {
+impl JsonArgs {
     /// Generate the JSON data based on the schema file and the provided
     /// parameters.
     pub fn generate(mut self) -> Res<String> {
@@ -43,13 +42,7 @@ impl<Rng: RngCore> JsonArgs<Rng> {
     }
 
     /// Create a new instance of `JsonArgs` with the provided parameters.
-    pub const fn new(
-        before: String,
-        after: String,
-        count: u32,
-        json: String,
-        data: Data<Rng>,
-    ) -> Self {
+    pub const fn new(before: String, after: String, count: u32, json: String, data: Data) -> Self {
         Self { after, before, count, data, json }
     }
 }

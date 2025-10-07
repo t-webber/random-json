@@ -412,6 +412,7 @@ dependencies = [
  "clap",
  "dialoguer",
  "rand",
+ "rand_chacha",
  "random-data",
  "serde_json",
 ]

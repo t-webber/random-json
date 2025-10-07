@@ -6,16 +6,17 @@ use std::collections::{HashMap, HashSet};
 
 use rand::rngs::ThreadRng;
 use rand::seq::IndexedRandom as _;
-use rand::{Rng as _, RngCore, rng};
-use random_data::{DataGenerator, DataType};
+use rand::{Rng as _, rng};
+use random_data::DataType;
 use serde_json::{Number, Value};
 
+use crate::data_generator::RandomDataGenerator;
 use crate::errors::{Error, Res};
 ///
 /// Generate random data of the given type.
 pub trait Generator<T>: Sized {
     /// Generate random data of the given type.
-    fn generate<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<T>;
+    fn generate(&self, data: &mut Data) -> Res<T>;
 }
 
 /// Generate random data of the given type, but with a nullable type.
@@ -23,14 +24,14 @@ pub trait NullableGenerator<T>: Sized {
     /// Generate random data of the given type, but with a nullable type.
     ///
     /// This can sometimes returns None.
-    fn generate_nullable<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Option<T>>;
+    fn generate_nullable(&self, data: &mut Data) -> Res<Option<T>>;
 }
 
 /// Contains the list of data types and the random generator to apply
 /// generators.
-pub struct Data<Rng: RngCore> {
+pub struct Data {
     /// Radnom data generator
-    random_data_generator: DataGenerator<Rng>,
+    random_data_generator: RandomDataGenerator,
     /// Pseudo-random refs
     ///
     /// This represents data that is randomly generated once, then used in
@@ -44,7 +45,7 @@ pub struct Data<Rng: RngCore> {
     user_defined: HashMap<String, Vec<String>>,
 }
 
-impl<Rng: RngCore> Data<Rng> {
+impl Data {
     /// Generate non-nullable data of the provided data type.
     fn generate(&mut self, data_type: &str) -> Res<OutputData> {
         if let Some(parsed) = data_type.strip_suffix(']')
@@ -77,9 +78,10 @@ impl<Rng: RngCore> Data<Rng> {
             OutputData::Float(self.rng.random_range(0.0f64..=f64::MAX))
         } else {
             OutputData::String(
-                DataType::try_from(data_type)
-                    .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?
-                    .random(&mut self.random_data_generator),
+                self.random_data_generator.random_value(
+                    DataType::try_from(data_type)
+                        .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?,
+                ),
             )
         };
 
@@ -199,6 +201,27 @@ impl<Rng: RngCore> Data<Rng> {
         list
     }
 
+    /// Build the [`Data`] handler from user inputs
+    pub fn new(input_data: Vec<String>, seed: Option<u64>) -> Res<Self> {
+        let mut user_defined = HashMap::new();
+
+        for data_type in input_data {
+            let (name, values) = Self::parse_user_defined(&data_type)?;
+
+            if user_defined.insert(name, values).is_some() {
+                return Err(Error::DuplicateDataType(data_type));
+            }
+        }
+
+        Ok(Self {
+            random_data_generator: RandomDataGenerator::new(seed),
+            user_defined,
+            rng: rng(),
+            refs: HashMap::new(),
+            uniq_types: HashMap::new(),
+        })
+    }
+
     /// Parse a user-defined data-type, with the format
     /// `Name:Value1|Value2|Value3`.
     fn parse_user_defined(user_input: &str) -> Res<(String, Vec<String>)> {
@@ -242,37 +265,14 @@ impl<Rng: RngCore> Data<Rng> {
     }
 }
 
-impl Data<ThreadRng> {
-    /// Build the [`Data`] handler from user inputs
-    pub fn new(input_data: Vec<String>, _seed: Option<u64>) -> Res<Self> {
-        let mut user_defined = HashMap::new();
-
-        for data_type in input_data {
-            let (name, values) = Self::parse_user_defined(&data_type)?;
-
-            if user_defined.insert(name, values).is_some() {
-                return Err(Error::DuplicateDataType(data_type));
-            }
-        }
-
-        Ok(Self {
-            random_data_generator: DataGenerator::default(),
-            user_defined,
-            rng: rng(),
-            refs: HashMap::new(),
-            uniq_types: HashMap::new(),
-        })
-    }
-}
-
 impl Generator<OutputData> for String {
-    fn generate<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<OutputData> {
+    fn generate(&self, data: &mut Data) -> Res<OutputData> {
         data.generate(self)
     }
 }
 
 impl NullableGenerator<OutputData> for String {
-    fn generate_nullable<Rng: RngCore>(&self, data: &mut Data<Rng>) -> Res<Option<OutputData>> {
+    fn generate_nullable(&self, data: &mut Data) -> Res<Option<OutputData>> {
         data.generate_nullable(self)
     }
 }
