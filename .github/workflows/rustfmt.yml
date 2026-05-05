@@ -1,12 +1,16 @@
 name: Formatting
 
 on:
-    push:
-        branches:
-            - "*"
-    pull_request:
-        branches:
-            - "*"
+  push:
+    paths:
+      - '**/*.rs'
+      - '**/rustfmt.toml'
+      - '.github/workflows/rustfmt.yml'
+  pull_request:
+    paths:
+      - '**/*.rs'
+      - '**/rustfmt.toml'
+      - '.github/workflows/rustfmt.yml'
 
 env:
     CARGO_TERM_COLOR: always
@@ -25,10 +29,6 @@ jobs:
                 toolchain: nightly
                 override: true
                 components: rustfmt
-
-            - name: Build
-              run: cargo build
-
 
             - name: Check formatting
               run: cargo fmt -- --check
