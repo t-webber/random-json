@@ -28,13 +28,13 @@ impl JsonArgs {
     /// Generate the JSON data based on the schema file and the provided
     /// parameters.
     pub fn generate(mut self) -> Res<String> {
-        let json: Value = serde_json::from_str(&self.json).map_err(Error::SerdeDeserializeJson)?;
+        let json: Value = serde_json::from_str(&self.json).map_err(Error::SerdeDeserialiseJson)?;
 
         let mut generated_data = String::new();
         for _ in 0..self.count {
             let generate_json = json.generate_nullable(&mut self.data)?.unwrap_or_default();
             let generate_json_str =
-                serde_json::to_string_pretty(&generate_json).map_err(Error::SerdeSerializeJson)?;
+                serde_json::to_string_pretty(&generate_json).map_err(Error::SerdeSerialiseJson)?;
             writeln!(generated_data, "{}{generate_json_str}{}", self.before, self.after)
                 .map_err(Error::JsonWriteString)?;
         }

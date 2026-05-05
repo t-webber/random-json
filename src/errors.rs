@@ -79,9 +79,9 @@ pub enum Error {
     NumberNotAnInteger(serde_json::Number),
     /// File exists but is in an invalid format, that makes the deserialization
     /// fail.
-    SerdeDeserializeJson(serde_json::Error),
+    SerdeDeserialiseJson(serde_json::Error),
     /// Error from `serde_json` when deserializing JSON data to a pretty string.
-    SerdeSerializeJson(serde_json::Error),
+    SerdeSerialiseJson(serde_json::Error),
     /// General I/O error from terminal interaction.
     TerminalIo(io::Error),
     /// User required different calls to give different values, but it is either
@@ -128,15 +128,15 @@ impl Error {
         match self {
             Self::UniqueFetchFailed{data_type, already_produced} => format!("Tried to generate a different value of {data_type} at every generation, but it is either impossible or the probability is very thin. Stop producing at {already_produced} different entries."),
             Self::JsonWriteString(_) |
-                                    Self::SerdeSerializeJson(_) => "Internal error occured.".to_owned(),
+                                    Self::SerdeSerialiseJson(_) => "Internal error occurred.".to_owned(),
             Self::FileNotFound { file, .. } => format!("{file} wasn't be found, ensure it exists and is accessible! You can also use the --json option to "),
             Self::InvalidDataType(data_type) => format!("{data_type} isn't a valid data type.\nUse -l to list the valid data types, -i to fuzzy search the data types, or -u to define your own data types!"),
-            Self::SerdeDeserializeJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
+            Self::SerdeDeserialiseJson (_) => "The provided JSON wasn't in a valid JSON format.".to_owned(),
             Self::InvalidSchemaType(invalid_type) => format!("your schema contains {invalid_type} which is not supported. The values must be strings with the name of the data type, or an array or an object of those strings."),
             Self::DialogueIo(_) | Self::TerminalIo(_) =>
                                        "An error occurred whilst interacting with your terminal. ".to_owned(),
             Self::ArrayMissingDataType => format!("invalid array syntax: missing data type.{ARRAY_SYNTAX}"),
-            Self::ExpectedInteger(value) => format!("invalid aray syntax: expected integer, found {value}.{ARRAY_SYNTAX}"),
+            Self::ExpectedInteger(value) => format!("invalid array syntax: expected integer, found {value}.{ARRAY_SYNTAX}"),
             Self::NumberNotAnInteger(number) => format!("invalid array syntax: expected integer, found {number}.{ARRAY_SYNTAX}"),
             Self::ArrayInvalidLength{original, ..} => format!("{original} is too large to be the length of an array.{ARRAY_SYNTAX}"),
             Self::FakerDefMissingColon => ("Data types must be given with the format -u 'DataTypeName:Value1|Value2|Value3'").to_owned(),
