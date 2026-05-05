@@ -24,3 +24,41 @@ rand = "0.9.2"
 rand_chacha = "0.9.0"
 random-data = "0.1.1"
 serde_json = "1.0.142"
+
+[lints.rust]
+missing_docs = "deny"
+unused = "deny"
+warnings = "deny"
+deprecated_safe = "deny"
+future_incompatible = "deny"
+keyword_idents = "deny"
+let_underscore = "deny"
+nonstandard_style = "deny"
+refining_impl_trait = "deny"
+rust_2018_compatibility = "deny"
+rust_2018_idioms = "deny"
+rust_2021_compatibility = "deny"
+rust_2024_compatibility = "deny"
+
+[lints.clippy]
+
+all = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+correctnes = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+restriction = { level = "deny", priority = -1 }
+style = { level = "deny", priority = -1 }
+
+single_call_fn = "allow"
+implicit_return = "allow"
+pattern_type_mismatch = "allow"
+blanket_clippy_restriction_lints = "allow"
+mod_module_files = "allow"
+pub_with_shorthand = "allow"
+unseparated_literal_suffix = "allow"
+question_mark_used = "allow"
+missing_inline_in_public_items = "allow"
+missing_trait_methods = "allow"
+doc_paragraphs_missing_punctuation = "allow"

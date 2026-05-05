@@ -105,7 +105,7 @@ impl Error {
                 "{repr}\nError type: {self:?}\n\x1b[3mIf you think this is a bug, please report it here: https://github.com/t-webber/fake-json/issues/new. Thanks!\x1b[0m",
             )
         } else {
-            format!("{repr}\nUse the --debug flag for more information",)
+            format!("{repr}\nUse the --debug flag for more information")
         }
     }
 
