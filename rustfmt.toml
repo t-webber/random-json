@@ -6,4 +6,3 @@ wrap_comments = true
 match_arm_blocks = false
 struct_lit_width = 80
 fn_call_width = 80
-
