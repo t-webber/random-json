@@ -62,3 +62,7 @@ question_mark_used = "allow"
 missing_inline_in_public_items = "allow"
 missing_trait_methods = "allow"
 doc_paragraphs_missing_punctuation = "allow"
+
+[profile.dist]
+inherits = "release"
+lto = "thin"
