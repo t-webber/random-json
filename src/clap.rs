@@ -137,16 +137,14 @@ impl CliArgs {
         Ok(provided)
     }
 
-    /// Parse the CLI arguments and run the appropriate generations.
-    pub fn parse_and_run() -> Res<String, String> {
-        let this = Self::parse();
-        let debug = this.debug;
-
-        this.run().map_err(|err| err.display(debug))
+    /// Run the generation based on the parsed CLI arguments.
+    pub fn run(self) -> Res<String, (Error, bool)> {
+        let debug = self.debug;
+        self.run_no_debug().map_err(|err| (err, debug))
     }
 
     /// Run the generation based on the parsed CLI arguments.
-    fn run(self) -> Res<String> {
+    fn run_no_debug(self) -> Res<String> {
         self.check_arguments()?;
         let mut data = Data::new(self.user_defined, self.seed)?;
 
