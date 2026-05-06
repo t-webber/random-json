@@ -26,12 +26,18 @@ pub struct CliArgs {
     /// String to print after every JSON generation
     #[arg(short, long)]
     after: Option<String>,
+    /// Deprecrated, use `--file` instead
+    #[arg(long, hide = true)]
+    schema: Option<String>,
+    /// Deprecrated, use `--pattern` instead
+    #[arg(short, long, hide = true)]
+    json: Option<String>,
     /// Path to the json schema.
-    #[arg(short = 'f', long = "schema", default_value_t = String::from("schema.json"))]
-    schema_file: String,
+    #[arg(short, long)]
+    file: Option<String>,
     /// Pass the JSON from stdout instead of via a json file.
     #[arg(short, long)]
-    json: Option<String>,
+    pattern: Option<String>,
     /// Generates some data of the given data type.
     #[arg(short = 't', long = "type")]
     data_type: Option<String>,
@@ -58,7 +64,7 @@ pub struct CliArgs {
 impl CliArgs {
     /// Check if the sequence of commands given are meaningful
     fn check_arguments(&self) -> Res<()> {
-        let provided = self.list_provided();
+        let provided = self.list_provided()?;
 
         let conflicting_arguments = if self.list
             && let Some(other) = find_other_than(&provided, &["list", "user", "type"])
@@ -72,8 +78,8 @@ impl CliArgs {
             && let Some(other) = find_other_than(&provided, &["values", "user", "type"])
         {
             ("values", other)
-        } else if self.json.is_some() && self.schema_file != "schema.json" {
-            ("json", "schema")
+        } else if self.json.is_some() && self.file.is_some() {
+            ("json", "file")
         } else if self.seed.is_some() && self.list {
             ("seed", "list")
         } else {
@@ -87,7 +93,14 @@ impl CliArgs {
     ///
     /// This excludes flags, like `--debug`, or options that can always be
     /// passed, like `--seed`.
-    fn list_provided(&self) -> Vec<&'static str> {
+    fn list_provided(&self) -> Res<Vec<&'static str>> {
+        if self.schema.is_some() {
+            return Err(Error::DeprecatedArg("schema", "file"));
+        }
+        if self.json.is_some() {
+            return Err(Error::DeprecatedArg("json", "pattern"));
+        }
+
         let mut provided = Vec::with_capacity(5);
 
         if self.count != 1 {
@@ -99,11 +112,11 @@ impl CliArgs {
         if self.after.is_some() {
             provided.push("after");
         }
-        if self.schema_file != "schema.json" {
-            provided.push("schema");
+        if self.file.is_some() {
+            provided.push("file");
         }
-        if self.json.is_some() {
-            provided.push("json");
+        if self.pattern.is_some() {
+            provided.push("pattern");
         }
         if self.data_type.is_some() {
             provided.push("type");
@@ -121,7 +134,7 @@ impl CliArgs {
             provided.push("values");
         }
 
-        provided
+        Ok(provided)
     }
 
     /// Parse the CLI arguments and run the appropriate generations.
@@ -163,18 +176,19 @@ impl CliArgs {
             return Dialog::generate(data);
         }
 
-        let json = if let Some(json) = self.json {
-            json
+        let pattern = if let Some(pattern) = self.pattern {
+            pattern
+        } else if let Some(path) = self.file {
+            fs::read_to_string(&path).map_err(Error::file_not_found(path))?
         } else {
-            fs::read_to_string(&self.schema_file)
-                .map_err(Error::file_not_found(self.schema_file))?
+            return Err(Error::NoPattern);
         };
 
         JsonArgs::new(
             self.before.unwrap_or_default(),
             self.after.unwrap_or_default(),
             self.count,
-            json,
+            pattern,
             data,
         )
         .generate()

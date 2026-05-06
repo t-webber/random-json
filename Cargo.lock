@@ -406,7 +406,7 @@ dependencies = [
 
 [[package]]
 name = "random-json"
-version = "0.1.2-rc"
+version = "0.1.2-rc.1"
 dependencies = [
  "chrono",
  "clap",

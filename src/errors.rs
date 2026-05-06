@@ -32,6 +32,8 @@ pub enum Error {
     ArrayMissingDataType,
     /// Used 2 CLI arguments that make no sense together.
     ConflictingArgs(&'static str, &'static str),
+    /// Used an old argument that no longer makes sense.
+    DeprecatedArg(&'static str, &'static str),
     /// Error from the dialoguer crate during user interaction.
     DialogueIo(dialoguer::Error),
     /// User parsed 2 custom data types with the same name.
@@ -73,6 +75,8 @@ pub enum Error {
     JsonWriteString(fmt::Error),
     /// User-defined type with `|` wasn't provided any values.
     MissingValueBeforePipe,
+    /// No file provided and no pattern provided.
+    NoPattern,
     /// Tried to list the values of a built-type.
     NonEnumerableDataType(String),
     /// Faled to parse a JSON number into an unsigned integer
@@ -126,6 +130,8 @@ impl Error {
     /// Get a nice and user-friendly error in case of failures.
     fn repr(&self) -> String {
         match self {
+            Self::DeprecatedArg(old, new) =>format!("`--{old}` has been deprecated, use `--{new}` instead."),
+            Self::NoPattern => "Please provide `--pattern` or `--file` with a path to a file containing the pattern.".to_owned(),
             Self::UniqueFetchFailed{data_type, already_produced} => format!("Tried to generate a different value of {data_type} at every generation, but it is either impossible or the probability is very thin. Stop producing at {already_produced} different entries."),
             Self::JsonWriteString(_) |
                                     Self::SerdeSerialiseJson(_) => "Internal error occurred.".to_owned(),
