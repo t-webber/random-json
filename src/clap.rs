@@ -138,21 +138,11 @@ impl CliArgs {
     }
 
     /// Parse the CLI arguments and run the appropriate generations.
-    pub fn parse_and_run() -> Res<(), ()> {
+    pub fn parse_and_run() -> Res<String, String> {
         let this = Self::parse();
         let debug = this.debug;
 
-        #[expect(clippy::print_stderr, clippy::print_stdout, reason = "it's a cli")]
-        match this.run() {
-            Ok(content) => {
-                println!("{content}");
-                Ok(())
-            }
-            Err(err) => {
-                eprintln!("{}", err.display(debug));
-                Err(())
-            }
-        }
+        this.run().map_err(|err| err.display(debug))
     }
 
     /// Run the generation based on the parsed CLI arguments.

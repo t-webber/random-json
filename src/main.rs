@@ -8,12 +8,20 @@ mod errors;
 mod generator_trait;
 mod json;
 
-fn main() {
-    use std::process::exit;
+use std::process::ExitCode;
 
+fn main() -> ExitCode {
     use crate::clap::CliArgs;
 
-    if CliArgs::parse_and_run().is_err() {
-        exit(1)
+    #[expect(clippy::print_stdout, clippy::print_stderr, reason = "it's a cli")]
+    match CliArgs::parse_and_run() {
+        Ok(content) => {
+            println!("{content}");
+            ExitCode::SUCCESS
+        }
+        Err(err) => {
+            eprintln!("{err}");
+            ExitCode::FAILURE
+        }
     }
 }
