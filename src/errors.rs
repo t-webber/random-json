@@ -131,7 +131,7 @@ impl Error {
     fn repr(&self) -> String {
         match self {
             Self::DeprecatedArg(old, new) =>format!("`--{old}` has been deprecated, use `--{new}` instead."),
-            Self::NoPattern => "Please provide `--pattern` or `--file` with a path to a file containing the pattern.".to_owned(),
+            Self::NoPattern => "Nothing to be done, please provide one of `--pattern`, `--file`, `--interactive`, `list` or `--values`.".to_owned(),
             Self::UniqueFetchFailed{data_type, already_produced} => format!("Tried to generate a different value of {data_type} at every generation, but it is either impossible or the probability is very thin. Stop producing at {already_produced} different entries."),
             Self::JsonWriteString(_) |
                                     Self::SerdeSerialiseJson(_) => "Internal error occurred.".to_owned(),

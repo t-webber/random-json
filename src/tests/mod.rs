@@ -6,17 +6,11 @@ use std::collections::HashSet;
 use clap::Parser as _;
 use serde_json::Value;
 
-use crate::clap::CliArgs;
+use crate::clap::{Action, CliArgs};
 
 #[test]
 fn repeat() {
-    let mut out =
-        match CliArgs::parse_from(["", "-p", r#"{"name": "FirstName"}"#, "-c", "2", "-a", ","])
-            .run()
-        {
-            Ok(out) => out,
-            Err((err, _)) => panic!("{err:?}"),
-        };
+    let mut out = run(["", "-p", r#"{"name": "FirstName"}"#, "-c", "2", "-a", ","]);
     assert_eq!(out.pop(), Some('\n'));
     assert_eq!(out.pop(), Some(','));
     let data = match serde_json::from_str::<Value>(&format!("[{out}]")) {
@@ -38,6 +32,13 @@ fn repeat() {
     }
 }
 
+fn run<const N: usize>(args: [&str; N]) -> String {
+    match CliArgs::parse_from(args).dispatch().1.and_then(Action::run) {
+        Ok(out) => out,
+        Err(err) => panic!("{err:?}"),
+    }
+}
+
 #[test]
 fn schema() {
     let schema = r#"{
@@ -45,10 +46,7 @@ fn schema() {
             "other_name": "FirstName",
             "address": "Address"
         }"#;
-    let out = match CliArgs::parse_from(["", "-p", schema]).run() {
-        Ok(out) => out,
-        Err((err, _)) => panic!("{err:?}"),
-    };
+    let out = run(["", "-p", schema]);
     let data = match serde_json::from_str::<Value>(&out) {
         Ok(Value::Object(data)) => data,
         Ok(other) => panic!("{out} is not an object: {other}"),
@@ -65,4 +63,11 @@ fn conflict() {
     for (first, second) in [("-p", "-f"), ("-s", "-l"), ("-p", "-i")] {
         CliArgs::try_parse_from(["", first, "", second, ""]).unwrap_err();
     }
+}
+
+#[test]
+fn list() {
+    let out = run(["", "-l"]);
+    assert!(out.contains("Country"));
+    assert!(out.contains("FirstName"));
 }

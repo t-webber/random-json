@@ -14,16 +14,17 @@ use std::process::ExitCode;
 
 use ::clap::Parser as _;
 
-use crate::clap::CliArgs;
+use crate::clap::{Action, CliArgs};
 
 fn main() -> ExitCode {
+    let (debug, res) = CliArgs::parse().dispatch();
     #[expect(clippy::print_stdout, clippy::print_stderr, reason = "it's a cli")]
-    match CliArgs::parse().run() {
+    match res.and_then(Action::run) {
         Ok(content) => {
             println!("{content}");
             ExitCode::SUCCESS
         }
-        Err((err, debug)) => {
+        Err(err) => {
             eprintln!("{}", err.display(debug));
             ExitCode::FAILURE
         }
