@@ -2,7 +2,7 @@
 
 use std::fs;
 
-use clap::Parser;
+use clap::{ArgGroup, Parser};
 
 use crate::data::Data;
 use crate::dialog::Dialog;
@@ -16,15 +16,20 @@ use crate::json::JsonArgs;
     reason = "order matters for CLI arguments ordering"
 )]
 #[derive(Parser, Debug)]
+#[command(group(
+        ArgGroup::new("action")
+        .args(["interactive", "pattern", "file", "data_type", "list", "values"])
+))]
+#[command(group(ArgGroup::new("combinable").multiple(true)))]
 pub struct CliArgs {
     /// Number of times to repeat the JSON
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 1, group = "combinable")]
     count: u32,
     /// String to print before every JSON generation
-    #[arg(short, long)]
+    #[arg(short, long, group = "combinable")]
     before: Option<String>,
     /// String to print after every JSON generation
-    #[arg(short, long)]
+    #[arg(short, long, group = "combinable")]
     after: Option<String>,
     /// Deprecrated, use `--file` instead
     #[arg(long, hide = true)]
@@ -33,108 +38,44 @@ pub struct CliArgs {
     #[arg(short, long, hide = true)]
     json: Option<String>,
     /// Path to the json schema.
-    #[arg(short, long)]
+    #[arg(short, long, group = "combinable")]
     file: Option<String>,
     /// Pass the JSON from stdout instead of via a json file.
-    #[arg(short, long)]
+    #[arg(short, long, group = "combinable")]
     pattern: Option<String>,
     /// Generates some data of the given data type.
-    #[arg(short = 't', long = "type")]
+    #[arg(short = 't', long = "type", group = "combinable")]
     data_type: Option<String>,
     /// Add custom data types, with the format 'Type:Value1|Value2'
-    #[arg(short, long = "user")]
+    #[arg(short, long = "user", group = "combinable")]
     user_defined: Vec<String>,
     /// Select the data type with a dialog and fuzzy search.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, conflicts_with_all = ["combinable", "list", "values"])]
     interactive: bool,
     /// List all available data types.
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, default_value_t = false, conflicts_with_all = ["combinable", "interactive", "values"])]
     list: bool,
     /// List all values of a type
-    #[arg(short, long)]
+    #[arg(short, long, conflicts_with_all = ["combinable", "interactive", "list"])]
     values: Option<String>,
     /// Debug errors with more precise information.
     #[arg(short, long, default_value_t = false)]
     debug: bool,
     /// Generate with a given random seed
-    #[arg(short, long)]
+    #[arg(short, long, group = "combinable")]
     seed: Option<u64>,
 }
 
 impl CliArgs {
     /// Check if the sequence of commands given are meaningful
-    fn check_arguments(&self) -> Res<()> {
-        let provided = self.list_provided()?;
-
-        let conflicting_arguments = if self.list
-            && let Some(other) = find_other_than(&provided, &["list", "user", "type"])
-        {
-            ("list", other)
-        } else if self.interactive
-            && let Some(other) = find_other_than(&provided, &["interactive", "user", "type"])
-        {
-            ("interactive", other)
-        } else if self.values.is_some()
-            && let Some(other) = find_other_than(&provided, &["values", "user", "type"])
-        {
-            ("values", other)
-        } else if self.json.is_some() && self.file.is_some() {
-            ("json", "file")
-        } else if self.seed.is_some() && self.list {
-            ("seed", "list")
-        } else {
-            return Ok(());
-        };
-
-        Err(Error::ConflictingArgs(conflicting_arguments.0, conflicting_arguments.1))
-    }
-
-    /// Count the number of provided arguments that may invalidate others
-    ///
-    /// This excludes flags, like `--debug`, or options that can always be
-    /// passed, like `--seed`.
-    fn list_provided(&self) -> Res<Vec<&'static str>> {
+    const fn check_arguments(&self) -> Res<()> {
         if self.schema.is_some() {
             return Err(Error::DeprecatedArg("schema", "file"));
         }
         if self.json.is_some() {
             return Err(Error::DeprecatedArg("json", "pattern"));
         }
-
-        let mut provided = Vec::with_capacity(5);
-
-        if self.count != 1 {
-            provided.push("count");
-        }
-        if self.before.is_some() {
-            provided.push("before");
-        }
-        if self.after.is_some() {
-            provided.push("after");
-        }
-        if self.file.is_some() {
-            provided.push("file");
-        }
-        if self.pattern.is_some() {
-            provided.push("pattern");
-        }
-        if self.data_type.is_some() {
-            provided.push("type");
-        }
-        if !self.user_defined.is_empty() {
-            provided.push("user");
-        }
-        if self.interactive {
-            provided.push("interactive");
-        }
-        if self.list {
-            provided.push("list");
-        }
-        if self.values.is_some() {
-            provided.push("values");
-        }
-
-        Ok(provided)
+        Ok(())
     }
 
     /// Run the generation based on the parsed CLI arguments.
@@ -181,9 +122,4 @@ impl CliArgs {
         )
         .generate()
     }
-}
-
-/// Find an element in a slice that is different than a given value
-fn find_other_than(list: &[&'static str], allowed: &[&'static str]) -> Option<&'static str> {
-    list.iter().find(|&entry| !allowed.contains(entry)).copied()
 }

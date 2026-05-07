@@ -1,4 +1,4 @@
-#![expect(clippy::panic, reason = "test")]
+#![expect(clippy::panic, clippy::unwrap_used, reason = "test")]
 
 use core::iter::once;
 use std::collections::HashSet;
@@ -58,4 +58,11 @@ fn schema() {
         data.keys().map(String::as_str).collect::<HashSet<&str>>(),
         ["name", "other_name", "address"].into_iter().collect()
     );
+}
+
+#[test]
+fn conflict() {
+    for (first, second) in [("-p", "-f"), ("-s", "-l"), ("-p", "-i")] {
+        CliArgs::try_parse_from(["", first, "", second, ""]).unwrap_err();
+    }
 }
