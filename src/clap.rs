@@ -19,10 +19,10 @@ use crate::json::JsonArgs;
 #[command(group(ArgGroup::new("combinable").multiple(true)))]
 pub struct CliArgs {
     /// String to print after every output generation
-    #[arg(short, long, group = "combinable")]
+    #[arg(short, long, group = "combinable", default_value = "\n")]
     after: String,
     /// String to print before every output generation
-    #[arg(short, long, group = "combinable")]
+    #[arg(short, long, group = "combinable", default_value = "")]
     before: String,
     /// Number of times to repeat the output.
     #[arg(short, long, default_value_t = 1, group = "combinable")]
@@ -71,8 +71,8 @@ impl CliArgs {
             ($pat:expr) => {
                 Action::Schema {
                     count: self.count,
-                    before: self.before.unwrap_or_default(),
-                    after: self.after.unwrap_or_default(),
+                    before: self.before,
+                    after: self.after,
                     user_defined: self.user_defined,
                     seed: self.seed,
                     pattern: $pat,

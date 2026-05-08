@@ -25,7 +25,7 @@ fn main() -> Res<ExitCode> {
     #[expect(clippy::print_stdout, clippy::print_stderr, reason = "it's a cli")]
     match res {
         Ok(content) => {
-            println!("{content}");
+            println!("{}", content.trim());
             Ok(ExitCode::SUCCESS)
         }
         Err(err) =>

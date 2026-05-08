@@ -11,7 +11,6 @@ use crate::clap::{Action, CliArgs};
 #[test]
 fn repeat() {
     let mut out = run(["", "-p", r#"{"name": "FirstName"}"#, "-c", "2", "-a", ","]);
-    assert_eq!(out.pop(), Some('\n'));
     assert_eq!(out.pop(), Some(','));
     let data = match serde_json::from_str::<Value>(&format!("[{out}]")) {
         Ok(Value::Array(data)) => data,

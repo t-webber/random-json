@@ -30,11 +30,7 @@ impl JsonArgs {
         let json: Value = serde_json::from_str(&self.json).context("Failed to deserialise json")?;
 
         let mut generated_data = String::new();
-        let len = self
-            .before
-            .len()
-            .saturating_add(self.after.len())
-            .saturating_add(1);
+        let len = self.before.len().saturating_add(self.after.len());
         for _ in 0..self.count {
             let generate_json = json.generate_nullable(&mut self.data)?.unwrap_or_default();
             let generate_json_str =
@@ -43,7 +39,6 @@ impl JsonArgs {
             generated_data.push_str(&self.before);
             generated_data.push_str(&generate_json_str);
             generated_data.push_str(&self.after);
-            generated_data.push('\n');
         }
 
         Ok(generated_data)
