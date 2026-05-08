@@ -45,7 +45,7 @@ rust_2024_compatibility = "deny"
 
 all = { level = "deny", priority = -1 }
 complexity = { level = "deny", priority = -1 }
-correctnes = { level = "deny", priority = -1 }
+correctness = { level = "deny", priority = -1 }
 nursery = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
 perf = { level = "deny", priority = -1 }
