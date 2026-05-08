@@ -3,10 +3,11 @@
 use std::fs;
 
 use clap::{ArgGroup, Parser};
+use color_eyre::eyre::{Context as _, eyre};
 
+use crate::Res;
 use crate::data::Data;
 use crate::dialog::Dialog;
-use crate::errors::{Error, Res};
 use crate::json::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
@@ -86,16 +87,16 @@ impl CliArgs {
         (
             self.debug,
             if self.schema.is_some() {
-                Err(Error::DeprecatedArg("schema", "file"))
+                Err(eyre!("Use of `--schema` is deprecated and was replaced by `--file`."))
             } else if self.json.is_some() {
-                Err(Error::DeprecatedArg("json", "pattern"))
+                Err(eyre!("Use of `--json` is deprecated and was replaced by `--pattern`."))
             } else if self.data_type.is_some() {
-                Err(Error::DeprecatedArg("type", "pattern"))
+                Err(eyre!("Use of `--type` is deprecated and was replaced by `--pattern`."))
             } else if let Some(pattern) = self.pattern {
                 Ok(schema!(pattern))
             } else if let Some(file) = self.file {
                 fs::read_to_string(&file)
-                    .map_err(|er| Error::FileNotFound { file, error: er })
+                    .with_context(|| format!("Failed to read {file}"))
                     .map(|content| schema!(content))
             } else if self.interactive {
                 Ok(Action::Interactive)
@@ -104,7 +105,9 @@ impl CliArgs {
             } else if self.list_types {
                 Ok(Action::ListTypes)
             } else {
-                Err(Error::NoPattern)
+                Err(eyre!(
+                    "Nothing to be done: no action provided. Provide one of `--file`, `--pattern, `--list`, `--interactive`, `--values`"
+                ))
             },
         )
     }

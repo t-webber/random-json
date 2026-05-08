@@ -19,6 +19,10 @@ pub enum RandomDataGenerator {
 
 impl RandomDataGenerator {
     /// Chooses an element from a slice with the random generator
+    ///
+    /// # Returns
+    ///
+    /// Returns `None` if `values` is empty.
     pub fn choose<'values, T>(&mut self, values: &'values [T]) -> Option<&'values T> {
         match self {
             Self::NonDeterministic(data_generator) => values.choose(data_generator.rng()),

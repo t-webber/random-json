@@ -4,7 +4,6 @@ mod clap;
 mod data;
 mod data_generator;
 mod dialog;
-mod errors;
 mod generator_trait;
 mod json;
 #[cfg(test)]
@@ -16,17 +15,25 @@ use ::clap::Parser as _;
 
 use crate::clap::{Action, CliArgs};
 
-fn main() -> ExitCode {
-    let (debug, res) = CliArgs::parse().dispatch();
+/// Colour eyre result short-hand that doesn't conflict with [`Result`]
+type Res<T = ()> = color_eyre::Result<T>;
+
+fn main() -> Res<ExitCode> {
+    color_eyre::install()?;
+    let (debug, action) = CliArgs::parse().dispatch();
+    let res = action.and_then(Action::run);
     #[expect(clippy::print_stdout, clippy::print_stderr, reason = "it's a cli")]
-    match res.and_then(Action::run) {
+    match res {
         Ok(content) => {
             println!("{content}");
-            ExitCode::SUCCESS
+            Ok(ExitCode::SUCCESS)
         }
-        Err(err) => {
-            eprintln!("{}", err.display(debug));
-            ExitCode::FAILURE
-        }
+        Err(err) =>
+            if debug {
+                Err(err)
+            } else {
+                eprintln!("{err}");
+                Ok(ExitCode::FAILURE)
+            },
     }
 }

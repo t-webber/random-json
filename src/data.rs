@@ -4,12 +4,13 @@ use core::hash::{Hash, Hasher};
 use core::mem::discriminant;
 use std::collections::{HashMap, HashSet};
 
+use color_eyre::eyre::{Context as _, ContextCompat as _, bail, eyre};
 use rand::distr::uniform::{SampleRange, SampleUniform};
 use random_data::DataType;
 use serde_json::{Number, Value};
 
+use crate::Res;
 use crate::data_generator::RandomDataGenerator;
-use crate::errors::{Error, Res};
 use crate::generator_trait::{Generator, NullableGenerator};
 
 /// Contains the list of data types and the random generator to apply
@@ -42,15 +43,15 @@ impl Data {
         if data_type.contains("..") {
             return self.generate_range(data_type);
         }
-        if data_type.contains('|') {
-            return self.generate_enum(data_type);
+        if let Some(data) = self.try_generate_enum(data_type) {
+            return Ok(data);
         }
 
         let value = if let Some(values) = self.user_defined.get(data_type) {
             OutputData::String(
                 self.rng
                     .choose(values)
-                    .ok_or(Error::FakerDefEmpty)?
+                    .with_context(|| format!("No values found for type {data_type}"))?
                     .to_owned(),
             )
         } else if data_type == "Bool" {
@@ -60,27 +61,12 @@ impl Data {
         } else if data_type == "Float" {
             OutputData::Float(self.random_range(0.0f64..=f64::MAX))
         } else {
-            OutputData::String(
-                self.rng.random_value(
-                    DataType::try_from(data_type)
-                        .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?,
-                ),
-            )
+            OutputData::String(self.rng.random_value(
+                DataType::try_from(data_type).map_err(|()| eyre!("Type {data_type} not found"))?,
+            ))
         };
 
         Ok(value)
-    }
-
-    /// Generate a user-defined data-type, defined with `|`
-    fn generate_enum(&mut self, data_type: &str) -> Res<OutputData> {
-        let values = data_type
-            .split('|')
-            .filter(|x| !x.is_empty())
-            .collect::<Vec<_>>();
-        self.rng
-            .choose(&values)
-            .ok_or(Error::MissingValueBeforePipe)
-            .map(|data| OutputData::String((*data).to_owned()))
     }
 
     /// Generate nullable data of the provided data type.
@@ -98,34 +84,21 @@ impl Data {
     }
 
     /// Generate the data for a range of numbers instead of a data type
-    #[expect(clippy::unwrap_used, reason = ".. in string")]
     fn generate_range(&mut self, data_type: &str) -> Res<OutputData> {
         let mut split = data_type.split("..");
+        #[expect(clippy::unwrap_used, reason = "split always has first value")]
         let min_str = split.next().unwrap();
-        if let Ok(min) = min_str.parse() {
-            let max = if let Some(max_str) = split.next() {
-                max_str
-                    .parse::<u64>()
-                    .map_err(Error::invalid_bounds(|| min_str.to_owned()))?
-            } else {
-                u64::MAX
-            };
-
+        let max_str = split.next();
+        if let Ok(min) = min_str.parse()
+            && let Ok(max) = max_str.map_or(Ok(u64::MAX), str::parse)
+        {
             return Ok(OutputData::Int(self.random_range(min..max)));
         }
-        match min_str.parse() {
-            Ok(min) => {
-                let max = if let Some(max_str) = split.next() {
-                    max_str
-                        .parse::<f64>()
-                        .map_err(Error::invalid_bounds(|| max_str.to_owned()))?
-                } else {
-                    f64::MAX
-                };
-                Ok(OutputData::Float(self.random_range(min..max)))
-            }
-            Err(error) => Err(Error::invalid_bounds(|| min_str.to_owned())(error)),
-        }
+        let min = min_str.parse()
+                .with_context(||format!("`..` means the generator should produce a bnumber in that range, but `{min_str}` isn't a number"))?;
+        let max= max_str.map(|val| val.parse()
+                .with_context(||format!("`..` means the generator should produce a bnumber in that range, but `{min_str}` isn't a number"))).transpose()?.unwrap_or(f64::MAX);
+        Ok(OutputData::Float(self.random_range(min..max)))
     }
 
     /// Generate random data with a given ref
@@ -144,23 +117,24 @@ impl Data {
     /// Generate a data type that must be different at every generation.
     #[expect(clippy::unwrap_used, reason = "generate can't empty uniq_types")]
     fn generate_unique(&mut self, data_type: &str) -> Res<OutputData> {
-        if self.uniq_types.contains_key(data_type) {
-            for _ in 0..10_000 {
-                let generated_data = self.generate(data_type)?;
-                let banned = self.uniq_types.get_mut(data_type).unwrap();
-                if !banned.contains(&generated_data) {
-                    banned.insert(generated_data.clone());
-                    return Ok(generated_data);
-                }
-            }
-            let already_produced = self.uniq_types.get_mut(data_type).unwrap().len();
-            Err(Error::UniqueFetchFailed { data_type: data_type.to_owned(), already_produced })
-        } else {
+        if !self.uniq_types.contains_key(data_type) {
             let generated_data = self.generate(data_type)?;
             self.uniq_types
                 .insert(data_type.to_owned(), HashSet::from([generated_data.clone()]));
-            Ok(generated_data)
+            return Ok(generated_data);
         }
+        for _ in 0i32..10_000i32 {
+            let generated_data = self.generate(data_type)?;
+            let banned = self.uniq_types.get_mut(data_type).unwrap();
+            if !banned.contains(&generated_data) {
+                banned.insert(generated_data.clone());
+                return Ok(generated_data);
+            }
+        }
+        let already_produced = self.uniq_types.get_mut(data_type).unwrap().len();
+        bail!(
+            "Already produced {already_produced} different values for {data_type}, and can't generate anymore"
+        )
     }
 
     /// List all the data types, user defined and from `random-data`.
@@ -191,8 +165,8 @@ impl Data {
         for data_type in input_data {
             let (name, values) = Self::parse_user_defined(&data_type)?;
 
-            if user_defined.insert(name, values).is_some() {
-                return Err(Error::DuplicateDataType(data_type));
+            if user_defined.insert(name.clone(), values).is_some() {
+                bail!("User-defined data-type {name} was given twice")
             }
         }
 
@@ -209,15 +183,15 @@ impl Data {
     fn parse_user_defined(user_input: &str) -> Res<(String, Vec<String>)> {
         let mut split = user_input.split(':');
 
-        #[expect(clippy::unwrap_used, reason = "slipt always has first element")]
+        #[expect(clippy::unwrap_used, reason = "split always has first element")]
         let name = split.next().unwrap();
 
         let Some(values) = split.next() else {
-            return Err(Error::FakerDefMissingColon);
+            bail!("Missing `:` in user-defined type. Expected: name:value1|value2")
         };
 
         if split.next().is_some() {
-            return Err(Error::FakerDefTooManyColons);
+            bail!("Too many `:` in user-defined type. Expected: name:value1|value2")
         }
 
         Ok((name.to_owned(), values.split('|').map(str::to_owned).collect()))
@@ -237,15 +211,31 @@ impl Data {
         self.rng.random_range(range)
     }
 
+    /// Generate a user-defined data-type, defined with `|`
+    ///
+    /// # Returns
+    ///
+    /// Returns [`None`] if the data-type doesn't contain `|`.
+    fn try_generate_enum(&mut self, data_type: &str) -> Option<OutputData> {
+        let values = data_type
+            .split('|')
+            .filter(|x| !x.is_empty())
+            .collect::<Vec<_>>();
+        let data = self.rng.choose(&values)?;
+        Some(OutputData::String((*data).to_owned()))
+    }
+
     /// List the possible values of a data-type
     pub fn values(&self, data_type: &str) -> Res<String> {
         if let Some(values) = self.user_defined.get(data_type) {
             Ok(values.join("\n"))
         } else {
             DataType::try_from(data_type)
-                .map_err(|()| Error::InvalidDataType(data_type.to_owned()))?
+                .map_err(|()| eyre!("Unknown data type `{data_type}`"))?
                 .values()
-                .ok_or_else(|| Error::NonEnumerableDataType(data_type.to_owned()))
+                .ok_or_else(|| {
+                    eyre!("`{data_type}` is non enumerable (i.e., produced by some formula)")
+                })
                 .map(|list| list.join("\n"))
         }
     }
@@ -305,13 +295,14 @@ impl OutputData {
 }
 
 impl TryFrom<OutputData> for Value {
-    type Error = Error;
+    type Error = color_eyre::Report;
 
     fn try_from(value: OutputData) -> Res<Self> {
         Ok(match value {
             OutputData::String(str) => Self::String(str),
-            OutputData::Float(nb) =>
-                Self::Number(Number::from_f64(nb).ok_or(Error::InfinityNotSupported)?),
+            OutputData::Float(nb) => Self::Number(
+                Number::from_f64(nb).with_context(|| format!("{nb} is not a valid number"))?,
+            ),
             OutputData::Int(nb) => Self::Number(nb.into()),
             OutputData::Bool(bool) => Self::Bool(bool),
         })

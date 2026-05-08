@@ -1,7 +1,7 @@
 //! Traits to make structs generate some data in a formatted way.
 
+use crate::Res;
 use crate::data::Data;
-use crate::errors::Res;
 
 /// Generate random data of the given type.
 pub trait Generator<T>: Sized {
