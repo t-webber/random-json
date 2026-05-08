@@ -43,8 +43,9 @@ impl Data {
         if data_type.contains("..") {
             return self.generate_range(data_type);
         }
-        if let Some(data) = self.try_generate_enum(data_type) {
-            return Ok(data);
+
+        if data_type.contains('|') {
+            return Ok(self.generate_enum(data_type));
         }
 
         let value = if let Some(values) = self.user_defined.get(data_type) {
@@ -67,6 +68,21 @@ impl Data {
         };
 
         Ok(value)
+    }
+
+    /// Generate a user-defined data-type, defined with `|`
+    ///
+    /// # Returns
+    ///
+    /// Returns [`None`] if the data-type doesn't contain `|`.
+    fn generate_enum(&mut self, data_type: &str) -> OutputData {
+        let values = data_type
+            .split('|')
+            .filter(|x| !x.is_empty())
+            .collect::<Vec<_>>();
+        #[expect(clippy::unwrap_used, reason = "split never empty")]
+        let data = self.rng.choose(&values).unwrap();
+        OutputData::String((*data).to_owned())
     }
 
     /// Generate nullable data of the provided data type.
@@ -211,20 +227,6 @@ impl Data {
         self.rng.random_range(range)
     }
 
-    /// Generate a user-defined data-type, defined with `|`
-    ///
-    /// # Returns
-    ///
-    /// Returns [`None`] if the data-type doesn't contain `|`.
-    fn try_generate_enum(&mut self, data_type: &str) -> Option<OutputData> {
-        let values = data_type
-            .split('|')
-            .filter(|x| !x.is_empty())
-            .collect::<Vec<_>>();
-        let data = self.rng.choose(&values)?;
-        Some(OutputData::String((*data).to_owned()))
-    }
-
     /// List the possible values of a data-type
     pub fn values(&self, data_type: &str) -> Res<String> {
         if let Some(values) = self.user_defined.get(data_type) {
@@ -255,7 +257,7 @@ impl NullableGenerator<OutputData> for String {
 
 /// Output data of the data generator, modified to have the right type instead
 /// of always string.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum OutputData {
     /// Output for "Bool"
     Bool(bool),
