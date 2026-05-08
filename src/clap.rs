@@ -11,10 +11,6 @@ use crate::dialog::Dialog;
 use crate::json::JsonArgs;
 
 /// CLI to generate some fake data under JSON format.
-#[expect(
-    clippy::arbitrary_source_item_ordering,
-    reason = "order matters for CLI arguments ordering"
-)]
 #[derive(Parser, Debug)]
 #[command(group(
         ArgGroup::new("action")
@@ -22,50 +18,50 @@ use crate::json::JsonArgs;
 ))]
 #[command(group(ArgGroup::new("combinable").multiple(true)))]
 pub struct CliArgs {
+    /// String to print after every output generation
+    #[arg(short, long, group = "combinable")]
+    after: String,
+    /// String to print before every output generation
+    #[arg(short, long, group = "combinable")]
+    before: String,
     /// Number of times to repeat the output.
     #[arg(short, long, default_value_t = 1, group = "combinable")]
     count: u32,
-    /// String to print before every output generation
-    #[arg(short, long, group = "combinable")]
-    before: Option<String>,
-    /// String to print after every output generation
-    #[arg(short, long, group = "combinable")]
-    after: Option<String>,
-    /// Deprecrated, use `--file` instead
-    #[arg(long, hide = true)]
-    schema: Option<String>,
-    /// Deprecrated, use `--pattern` instead
-    #[arg(short, long, hide = true)]
-    json: Option<String>,
+    /// Deprecated, use `--pattern` instead
+    #[arg(short = 't', long = "type", group = "combinable", hide = true)]
+    data_type: Option<String>,
+    /// Debug errors with more precise information.
+    #[arg(short, long, default_value_t = false, hide = true)]
+    debug: bool,
     /// Path to the file containing the pattern to use to generate the data.
     /// Supports json, csv, tsv.
     #[arg(short, long, group = "combinable")]
     file: Option<String>,
+    /// Select the data type with a dialog and fuzzy search.
+    #[arg(short, long, default_value_t = false, conflicts_with_all = ["combinable", "list_types", "values"])]
+    interactive: bool,
+    /// Deprecrated, use `--pattern` instead
+    #[arg(short, long, hide = true)]
+    json: Option<String>,
+    /// List all available data types.
+    #[arg(short, long="list", default_value_t = false, conflicts_with_all = ["combinable", "interactive", "values"])]
+    list_types: bool,
     /// Pass a pattern using the CLI argument instead of in a file. Supports
     /// json, csv, tsv.
     #[arg(short, long, group = "combinable")]
     pattern: Option<String>,
-    /// Deprecated, use `--pattern` instead
-    #[arg(short = 't', long = "type", group = "combinable", hide = true)]
-    data_type: Option<String>,
-    /// Add custom data types, with the format 'Type:Value1|Value2'
-    #[arg(short, long = "user", group = "combinable")]
-    user_defined: Vec<String>,
-    /// Select the data type with a dialog and fuzzy search.
-    #[arg(short, long, default_value_t = false, conflicts_with_all = ["combinable", "list_types", "values"])]
-    interactive: bool,
-    /// List all available data types.
-    #[arg(short, long="list", default_value_t = false, conflicts_with_all = ["combinable", "interactive", "values"])]
-    list_types: bool,
-    /// List all values of a type
-    #[arg(short, long, conflicts_with_all = ["combinable", "interactive", "list_types"])]
-    values: Option<String>,
-    /// Debug errors with more precise information.
-    #[arg(short, long, default_value_t = false, hide = true)]
-    debug: bool,
+    /// Deprecrated, use `--file` instead
+    #[arg(long, hide = true)]
+    schema: Option<String>,
     /// Generate with a given random seed
     #[arg(short, long, group = "combinable")]
     seed: Option<u64>,
+    /// Add custom data types, with the format 'Type:Value1|Value2'
+    #[arg(short, long = "user", group = "combinable")]
+    user_defined: Vec<String>,
+    /// List all values of a type
+    #[arg(short, long, conflicts_with_all = ["combinable", "interactive", "list_types"])]
+    values: Option<String>,
 }
 
 impl CliArgs {
