@@ -32,7 +32,11 @@ fn main() -> Res<ExitCode> {
             if debug {
                 Err(err)
             } else {
-                eprintln!("{err}");
+                let mut prefix = "";
+                for er in err.chain() {
+                    eprintln!("{prefix}\x1b[31m{er}\x1b[0m");
+                    prefix = "  ";
+                }
                 Ok(ExitCode::FAILURE)
             },
     }
